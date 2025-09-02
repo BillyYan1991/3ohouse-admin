@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-tw">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>嘉品營運管理系統</title>
+    <link id="theme-style" rel="stylesheet" href="/css/portal.css" />
+    <script src="/js/jquery-1.8.2.min.js"></script>
+    <script>
+        // 模擬企業資料
+        var enterprises = [
+            { uid: "1", name: "企業A", logoName: "logoA.png" },
+            { uid: "2", name: "企業B", logoName: "logoB.png" }
+        ];
+        var enterpriseNames = {};
+        var enterpriseLogoNames = {};
+        enterprises.forEach(function (enterprise) {
+            enterpriseNames[enterprise.uid] = enterprise.name;
+            enterpriseLogoNames[enterprise.uid] = enterprise.logoName;
+        });
+
+        $(function () {
+            $('#userid').focus();
+
+            $('.enterpriseUid').change(function () {
+                var enterpriseUid = $(this).val();
+                var name = enterpriseNames[enterpriseUid] || '嘉品營運管理系統';
+                var logoName = enterpriseLogoNames[enterpriseUid];
+                var logoUrl;
+                if (logoName) {
+                    logoUrl = '/logo/' + enterpriseUid + '/' + logoName;
+                } else {
+                    logoUrl = '/Shared/Images/logo.png';
+                }
+                $('#logoImg').attr('src', logoUrl);
+                $('title').text(name);
+            }).change();
+
+            $('.login-form').on('reset', function () {
+                setTimeout(function () {
+                    $('.enterpriseUid').change();
+                }, 0);
+            });
+        });
+    </script>
+</head>
+
+<body class="app app-login p-0">
+    <div class="row g-0 app-auth-wrapper justify-content-center">
+        <div class="col-12 col-md-7 col-lg-6 auth-main-col text-center p-5">
+            <div class="d-flex flex-column align-content-end">
+                <div class="app-auth-body mx-auto">
+                    <div class="app-auth-branding mb-4">
+                        <img src="/Shared/Images/logo.png" id="logoImg" style="width: 250px;" />
+                    </div>
+                    <h2 class="auth-heading text-center mb-4">營運管理系統</h2>
+                    <div class="auth-form-container text-start">
+                        <form class="auth-form login-form" method="post" action="/login">
+                            <div class="mb-3">
+                                <label class="sr-only" for="userid">帳號</label>
+                                <input id="userid" name="userid" class="form-control" placeholder="帳號" required />
+                            </div>
+                            <div class="password mb-3">
+                                <label class="sr-only" for="password">密碼</label>
+                                <input type="password" id="password" name="password"
+                                    class="form-control signin-password" placeholder="密碼" required />
+                            </div>
+                            <div class="mb-3">
+                                <label class="sr-only" for="enterpriseUid">公司</label>
+                                <select id="enterpriseUid" name="enterpriseUid"
+                                    class="enterpriseUid form-control form-select">
+                                    <option value="">請選擇公司</option>
+                                    <option value="1">企業A</option>
+                                    <option value="2">企業B</option>
+                                </select>
+                            </div>
+                            <div class="row justify-content-between">
+                                <div class="col-6">
+                                    <button type="submit"
+                                        class="btn app-btn-primary w-100 theme-btn mx-auto">送出</button>
+                                </div>
+                                <div class="col-6">
+                                    <button type="reset" class="btn app-btn-primary w-100 theme-btn mx-auto">重設</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
