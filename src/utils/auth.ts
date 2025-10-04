@@ -13,6 +13,14 @@ export function clearToken() {
   localStorage.removeItem('auth_token')
 }
 
+/**
+ * 簡單判斷是否已登入（有 token 即視為已登入）
+ */
+export function isLoggedIn(): boolean {
+  const t = getToken()
+  return !!t
+}
+
 export function parseJwt(token: string): Record<string, unknown> | null {
   try {
     const parts = token.split('.')

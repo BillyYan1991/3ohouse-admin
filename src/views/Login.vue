@@ -66,7 +66,13 @@ export default defineComponent({
       }
       try {
         await login({ email: form.value.email, password: form.value.password })
-        await router.push({ name: 'Index' })
+        // 若有 redirect 查詢參數，導回該路徑
+        const redirect = (router.currentRoute.value.query.redirect as string) || null
+        if (redirect) {
+          await router.replace(redirect)
+        } else {
+          await router.push({ name: 'Index' })
+        }
       } catch (e) {
         error.value = (e as Error).message || '網路錯誤'
       }
