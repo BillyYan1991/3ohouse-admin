@@ -71,7 +71,7 @@ export default defineComponent({
         if (redirect) {
           await router.replace(redirect)
         } else {
-          await router.push({ name: 'Index' })
+          await router.push({ name: 'Home' })
         }
       } catch (e) {
         error.value = (e as Error).message || '網路錯誤'
