@@ -17,10 +17,23 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@element-plus/icons-vue": "^2.3.2",
+    "axios": "^1.12.2",
+    "dayjs": "^1.11.18",
+    "element-plus": "^2.11.4",
     "jquery": "^3.7.1",
+    "js-cookie": "^3.0.5",
+    "lodash-es": "^4.17.21",
+    "mitt": "^3.0.1",
+    "normalize.css": "^8.0.1",
+    "nprogress": "^0.2.0",
+    "path-browserify": "^1.0.1",
+    "path-to-regexp": "^8.3.0",
     "pinia": "^3.0.3",
+    "screenfull": "^6.0.2",
     "vue": "^3.5.18",
-    "vue-router": "^4.5.1"
+    "vue-router": "^4.5.1",
+    "vxe-table": "^4.6.25"
   },
   "devDependencies": {
     "@tsconfig/node22": "^22.0.2",
