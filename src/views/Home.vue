@@ -27,7 +27,8 @@
                   <td class="cell"><span class="cell-data">{{ formatDate(booking.checkOut) }}</span></td>
                   <td class="cell">{{ booking.nights }}</td>
                   <td class="cell">{{ booking.totalPrice }}</td>
-                  <td class="cell"><a class="btn-sm app-btn-secondary" href="#">View</a></td>
+                  <td class="cell"><router-link class="btn-sm app-btn-secondary"
+                      :to="{ name: 'BookingForm', params: { id: booking.id } }">編輯</router-link></td>
                 </tr>
 
               </tbody>
