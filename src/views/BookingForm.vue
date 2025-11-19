@@ -5,38 +5,39 @@
     <div v-if="loading">載入中...</div>
     <div v-else-if="error" class="text-danger">{{ error }}</div>
     <div v-else>
-      <form @submit.prevent="onSave">
+      <form>
         <div class="mb-3">
-          <label class="form-label">民宿名稱</label>
-          <input class="form-control" v-model="booking.house.name" />
+          <label class="form-label">民宿</label>
+          <input class="form-control" :value="booking.house.name" readonly />
         </div>
         <div class="mb-3">
-          <label class="form-label">客戶名稱</label>
-          <input class="form-control" v-model="booking.userName" />
+          <label class="form-label">姓名</label>
+          <input class="form-control" :value="booking.userName" readonly />
         </div>
         <div class="mb-3">
           <label class="form-label">入住日期</label>
-          <input type="date" class="form-control" v-model="booking.checkIn" />
+          <!--sub 0~10-->
+          <input type="date" class="form-control" :value="booking.checkIn?.slice(0, 10)" readonly />
         </div>
         <div class="mb-3">
           <label class="form-label">退房日期</label>
-          <input type="date" class="form-control" v-model="booking.checkOut" />
+          <input type="date" class="form-control" :value="booking.checkOut?.slice(0, 10)" readonly />
         </div>
         <div class="mb-3">
           <label class="form-label">幾晚</label>
-          <input type="number" class="form-control" v-model="booking.nights" />
+          <input type="number" class="form-control" :value="booking.nights" readonly />
         </div>
         <div class="mb-3">
           <label class="form-label">總金額</label>
-          <input type="number" class="form-control" v-model="booking.totalPrice" />
+          <input type="number" class="form-control" :value="booking.totalPrice" readonly />
         </div>
         <div class="mb-3">
           <label class="form-label">訂金</label>
-          <input type="number" class="form-control" v-model="booking.prepayment" />
+          <input type="number" class="form-control" style="background-color:beige;" v-model="booking.prepayment" />
         </div>
         <div class="mb-3">
           <label class="form-label">已付金額</label>
-          <input type="number" class="form-control" v-model="booking.paid" />
+          <input type="number" class="form-control" style="background-color:beige;" v-model="booking.paid" />
         </div>
 
         <div class="app-card app-card-orders-table shadow-sm mb-5">
@@ -45,11 +46,11 @@
               <table class="table app-table-hover mb-0 text-left">
                 <thead>
                   <tr>
-                    <th class="cell">房型</th>
-                    <th class="cell">金額</th>
-                    <th class="cell">加床</th>
-                    <th class="cell">加床價格</th>
-                    <th class="cell">嬰兒床</th>
+                    <th style="background-color:azure" class=" cell">房型</th>
+                    <th style="background-color:azure" class="cell">金額</th>
+                    <th style="background-color:azure" class="cell">加床</th>
+                    <th style="background-color:azure" class="cell">加床價格</th>
+                    <th style="background-color:azure" class="cell">嬰兒床</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -68,7 +69,8 @@
 
           </div><!--//app-card-body-->
         </div>
-        <button class="btn btn-primary" type="submit">儲存</button>
+        <button class="btn btn-primary ms-2" type="submit" @click.prevent="onSave">儲存</button>
+        <button class="btn bg-danger ms-2" type="submit" @click.prevent="onCancel">取消</button>
         <button class="btn btn-secondary ms-2" type="button" @click="goBack">返回</button>
       </form>
     </div>
@@ -107,9 +109,7 @@ export default defineComponent({
       }
     }
 
-    function formatDate(dateStr?: string) {
-      return dateStr ? dateStr.substring(0, 10) : "";
-    }
+
 
     const fetchBooking = async (bookingId: string) => {
       loading.value = true
@@ -117,8 +117,6 @@ export default defineComponent({
       try {
         const res = await axios.get<Booking>(`${apiUrl}/booking/form?id=${bookingId}`)
         booking.value = res.data
-        booking.value.checkIn = formatDate(booking.value.checkIn)
-        booking.value.checkOut = formatDate(booking.value.checkOut)
         console.log('載入的 booking 資料', booking.value)
       } catch (err: unknown) {
         error.value = getErrorMessage(err)
@@ -136,9 +134,37 @@ export default defineComponent({
       // 範例：如果有 id，put 更新，否則 post 建立
       try {
         if (id) {
-          await axios.put(`${apiUrl}/booking/${id}`, booking.value)
+          const payload = {
+            id: booking.value?.id,
+            prepayment: booking.value?.prepayment ?? 0,
+            paid: booking.value?.paid ?? 0,
+            status: 2
+          }
+          await axios.put(`${apiUrl}/booking/form?id=${id}`, payload)
         } else {
-          await axios.post(`${apiUrl}/booking`, booking.value)
+          //尚未實作後台新增
+          // await axios.post(`${apiUrl}/booking/form`, booking.value)
+        }
+        router.back()
+      } catch (err: unknown) {
+        error.value = getErrorMessage(err) || '儲存失敗'
+      }
+    }
+
+    const onCancel = async () => {
+      // 範例：如果有 id，put 更新，否則 post 建立
+      try {
+        if (id) {
+          const payload = {
+            id: booking.value?.id,
+            prepayment: booking.value?.prepayment ?? 0,
+            paid: booking.value?.paid ?? 0,
+            status: -1
+          }
+          await axios.put(`${apiUrl}/booking/form?id=${id}`, payload)
+        } else {
+          //尚未實作後台新增
+          // await axios.post(`${apiUrl}/booking/form`, booking.value)
         }
         router.back()
       } catch (err: unknown) {
@@ -148,7 +174,7 @@ export default defineComponent({
 
     const goBack = () => router.back()
 
-    return { loading, error, booking, onSave, goBack }
+    return { loading, error, booking, onSave, goBack, onCancel }
   }
 })
 </script>
