@@ -17,11 +17,11 @@
         <div class="mb-3">
           <label class="form-label">入住日期</label>
           <!--sub 0~10-->
-          <input type="date" class="form-control" :value="booking.checkIn?.slice(0, 10)" readonly />
+          <input type="date" class="form-control" :value="formatDate(booking?.checkIn)" readonly />
         </div>
         <div class="mb-3">
           <label class="form-label">退房日期</label>
-          <input type="date" class="form-control" :value="booking.checkOut?.slice(0, 10)" readonly />
+          <input type="date" class="form-control" :value="formatDate(booking.checkOut)" readonly />
         </div>
         <div class="mb-3">
           <label class="form-label">幾晚</label>
@@ -33,7 +33,8 @@
         </div>
         <div class="mb-3">
           <label class="form-label">訂金</label>
-          <input type="number" class="form-control" style="background-color:beige;" v-model="booking.prepayment" />
+          <input type="number" class="form-control" style="background-color:beige;" :value="booking.prepayment"
+            readonly />
         </div>
         <div class="mb-3">
           <label class="form-label">已付金額</label>
@@ -84,7 +85,11 @@ import axios from 'axios'
 import type { Booking } from '@/types/booking'
 
 const apiUrl = import.meta.env.VITE_API_URL
-
+//format date
+const formatDate = (dateString: string) => {
+  const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' }
+  return new Date(dateString).toLocaleDateString('zh-TW', options)
+}
 export default defineComponent({
   name: 'BookingForm',
   setup() {
@@ -174,7 +179,7 @@ export default defineComponent({
 
     const goBack = () => router.back()
 
-    return { loading, error, booking, onSave, goBack, onCancel }
+    return { loading, error, booking, onSave, goBack, onCancel, formatDate }
   }
 })
 </script>
