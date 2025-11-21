@@ -8,7 +8,7 @@
       <form>
         <div class="mb-3">
           <label class="form-label">民宿</label>
-          <input class="form-control" :value="booking.house.name" readonly />
+          <input class="form-control" :value="booking.house?.name" readonly />
         </div>
         <div class="mb-3">
           <label class="form-label">姓名</label>
@@ -17,11 +17,13 @@
         <div class="mb-3">
           <label class="form-label">入住日期</label>
           <!--sub 0~10-->
-          <input type="date" class="form-control" :value="formatDate(booking?.checkIn)" readonly />
+          <input type="date" class="form-control" :value="booking.checkIn ? formatDateToInput(booking.checkIn) : ''"
+            readonly />
         </div>
         <div class="mb-3">
           <label class="form-label">退房日期</label>
-          <input type="date" class="form-control" :value="formatDate(booking.checkOut)" readonly />
+          <input type="date" class="form-control" :value="booking.checkOut ? formatDateToInput(booking.checkOut) : ''"
+            readonly />
         </div>
         <div class="mb-3">
           <label class="form-label">幾晚</label>
@@ -33,14 +35,20 @@
         </div>
         <div class="mb-3">
           <label class="form-label">訂金</label>
-          <input type="number" class="form-control" style="background-color:beige;" :value="booking.prepayment"
-            readonly />
+          <input type="number" class="form-control" :value="booking.prepayment" readonly />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">調整金額</label>
+          <input type="number" class="form-control" style="background-color:beige;" v-model="booking.adjustment" />
         </div>
         <div class="mb-3">
           <label class="form-label">已付金額</label>
           <input type="number" class="form-control" style="background-color:beige;" v-model="booking.paid" />
         </div>
-
+        <div class="mb-3">
+          <label class="form-label">客戶備註</label>
+          <textarea class="form-control" :value="booking.memo" rows="3" readonly></textarea>
+        </div>
         <div class="app-card app-card-orders-table shadow-sm mb-5">
           <div class="app-card-body">
             <div class="table-responsive">
@@ -61,14 +69,16 @@
                     <td class="cell">{{ detail.extraBedQty }}</td>
                     <td class="cell">{{ detail.extraBedPrice }}</td>
                     <td class="cell">{{ detail.babyBedQty }}</td>
-
                   </tr>
 
                 </tbody>
               </table>
             </div><!--//table-responsive-->
-
           </div><!--//app-card-body-->
+        </div>
+        <div class="mb-3">
+          <label class="form-label">管理員備註</label>
+          <textarea class="form-control" v-model="booking.admin_memo" rows="3"></textarea>
         </div>
         <button class="btn btn-primary ms-2" type="submit" @click.prevent="onSave">儲存</button>
         <button class="btn bg-danger ms-2" type="submit" @click.prevent="onCancel">取消</button>
@@ -85,6 +95,14 @@ import axios from 'axios'
 import type { Booking } from '@/types/booking'
 
 const apiUrl = import.meta.env.VITE_API_URL
+// input[type=date] 專用
+const formatDateToInput = (dateString: string) => {
+  const d = new Date(dateString)
+  const year = d.getFullYear()
+  const month = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${year}-${month}-${day}`
+}
 //format date
 const formatDate = (dateString: string) => {
   const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' }
@@ -141,8 +159,9 @@ export default defineComponent({
         if (id) {
           const payload = {
             id: booking.value?.id,
-            prepayment: booking.value?.prepayment ?? 0,
+            adjustment: booking.value?.adjustment ?? 0,
             paid: booking.value?.paid ?? 0,
+            admin_memo: booking.value?.admin_memo ?? null,
             status: 2
           }
           await axios.put(`${apiUrl}/booking/form?id=${id}`, payload)
@@ -162,8 +181,9 @@ export default defineComponent({
         if (id) {
           const payload = {
             id: booking.value?.id,
-            prepayment: booking.value?.prepayment ?? 0,
+            adjustment: booking.value?.adjustment ?? 0,
             paid: booking.value?.paid ?? 0,
+            admin_memo: booking.value?.admin_memo ?? null,
             status: -1
           }
           await axios.put(`${apiUrl}/booking/form?id=${id}`, payload)
@@ -179,7 +199,7 @@ export default defineComponent({
 
     const goBack = () => router.back()
 
-    return { loading, error, booking, onSave, goBack, onCancel, formatDate }
+    return { loading, error, booking, onSave, goBack, onCancel, formatDate, formatDateToInput }
   }
 })
 </script>

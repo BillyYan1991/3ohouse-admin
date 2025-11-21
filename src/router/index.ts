@@ -3,6 +3,7 @@ import LoginView from '../views/Login.vue'
 import IndexView from '../views/AppIndex.vue'
 import HomeView from '../views/Home.vue'
 import BookingForm from '../views/BookingForm.vue'
+import CalendarForm from '../views/CalendarForm.vue'
 import NotFoundView from '../views/NotFound.vue'
 import { isLoggedIn } from '@/utils/auth'
 
@@ -25,6 +26,11 @@ const router = createRouter({
           path: 'bookingForm/:id?',
           name: 'BookingForm',
           component: BookingForm,
+        },
+        {
+          path: 'calendarForm/:id',
+          name: 'CalendarForm/',
+          component: CalendarForm,
         },
       ],
     },

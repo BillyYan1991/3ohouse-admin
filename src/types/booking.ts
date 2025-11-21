@@ -8,9 +8,11 @@ export interface Booking {
   totalPrice: number
   nights: number
   prepayment: number
+  adjustment: number
   paid: number
   paymentMethod: string
   paymemo: string
+  admin_memo: string
   orderNo: string
   checkIn: string
   checkOut: string
