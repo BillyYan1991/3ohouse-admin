@@ -28,6 +28,11 @@
                   </div>
                 </div>
                 <div v-if="error" class="mt-3 text-danger">{{ error }}</div>
+                <div class="mt-3">
+                  <button type="button" class="btn btn-outline-danger w-100" @click="startGoogleLogin">
+                    使用 Google 登入
+                  </button>
+                </div>
               </form>
             </div>
           </div>
@@ -38,9 +43,10 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
+import { defineComponent, ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { login } from '@/services/auth'
+import { setToken } from '@/utils/auth'
 
 export default defineComponent({
   name: 'LoginView',
@@ -49,6 +55,7 @@ export default defineComponent({
 
     const form = ref({ email: '', password: '' })
     const error = ref('')
+    const base = ((import.meta.env.VITE_API_BASE as string) || '/api').replace(/\/$/, '')
 
 
     function onReset() {
@@ -78,7 +85,134 @@ export default defineComponent({
       }
     }
 
-    return { form, error, onSubmit, onReset }
+    async function startGoogleLogin() {
+      error.value = ''
+      const googleClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) || ''
+      if (!googleClientId) {
+        error.value = '缺少 Google client id，請設定 VITE_GOOGLE_CLIENT_ID'
+        return
+      }
+
+      // 動態載入 GSI 腳本（如果尚未載入）
+      const ensureGsiLoaded = (): Promise<void> => {
+        return new Promise((resolve, reject) => {
+          const win = window as unknown as Record<string, unknown>
+          const googleObj = win['google'] as Record<string, unknown> | undefined
+          const accounts = googleObj?.['accounts'] as Record<string, unknown> | undefined
+          const idObj = accounts?.['id'] as Record<string, unknown> | undefined
+          if (idObj && typeof idObj === 'object') return resolve()
+
+          // 如果已經插入 <script data-gsi>，但尚未載入 google 物件，等候該 script 的 load/error
+          const existing = document.querySelector('script[data-gsi]') as HTMLScriptElement | null
+          if (existing) {
+            existing.addEventListener('load', () => resolve())
+            existing.addEventListener('error', () => reject(new Error('載入 Google GSI 失敗')))
+            return
+          }
+
+          // 否則新增 script
+          const script = document.createElement('script')
+          script.setAttribute('src', 'https://accounts.google.com/gsi/client')
+          script.setAttribute('defer', 'true')
+          script.setAttribute('data-gsi', '1')
+          script.onload = () => resolve()
+          script.onerror = () => reject(new Error('載入 Google GSI 失敗'))
+          document.head.appendChild(script)
+        })
+      }
+
+      try {
+        await ensureGsiLoaded()
+
+        const win = window as unknown as Record<string, unknown>
+        // 初始化
+        const googleObj = win['google'] as Record<string, unknown> | undefined
+        const accountsObj = googleObj?.['accounts'] as Record<string, unknown> | undefined
+        const idObj = accountsObj?.['id'] as Record<string, unknown> | undefined
+        const initializeFn = idObj?.['initialize'] as ((opts: Record<string, unknown>) => void) | undefined
+        const promptFn = idObj?.['prompt'] as (() => void) | undefined
+
+        initializeFn?.({
+          client_id: googleClientId,
+          callback: async (resp: unknown) => {
+            try {
+              const idToken = (resp as Record<string, unknown>)['credential'] as string | undefined
+              if (!idToken) throw new Error('Google 回傳的 credential 為空')
+
+              // 丟給後端驗證 + 換你自己的 token
+              const r = await fetch(`${base}/user/oauth/google`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ idToken }),
+              })
+
+              if (!r.ok) {
+                let msg = 'Google 登入失敗'
+                try {
+                  const j = await r.json()
+                  msg = j.message || j.error || JSON.stringify(j)
+                } catch {
+                  msg = await r.text()
+                }
+                throw new Error(msg)
+              }
+
+              const data = await r.json()
+              const token = data.token || data.accessToken || data.auth_token || null
+              if (!token) throw new Error('後端未回傳 token')
+
+              // 儲存 token（使用專案的 helper）
+              try {
+                setToken(token)
+              } catch {
+                // fallback
+                localStorage.setItem('auth_token', token)
+              }
+
+              // 導回 redirect 或首頁
+              const redirect = (router.currentRoute.value.query.redirect as string) || null
+              if (redirect) {
+                await router.replace(redirect)
+              } else {
+                await router.replace({ name: 'Home' })
+              }
+            } catch (e: unknown) {
+              const err = e as unknown
+              error.value = (err as Error)?.message || 'Google 登入處理失敗'
+              console.error('google callback error', err)
+            }
+          },
+        })
+
+        // 顯示一鍵登入提示（或彈窗）
+        promptFn?.()
+      } catch (e: unknown) {
+        const err = e as unknown
+        error.value = (err as Error)?.message || '載入 Google 登入套件失敗'
+      }
+    }
+
+    // 如果後端在重導到 /login 時帶上 token，這邊會接收並儲存
+    onMounted(() => {
+      const q = router.currentRoute.value.query
+      const token = (q.token as string) || null
+      if (token) {
+        try {
+          setToken(token)
+        } catch (e) {
+          console.error('set token error', e)
+        }
+        // 導回 redirect 或首頁
+        const redirect = (q.redirect as string) || null
+        if (redirect) {
+          router.replace(redirect)
+        } else {
+          router.replace({ name: 'Home' })
+        }
+      }
+    })
+
+    return { form, error, onSubmit, onReset, startGoogleLogin }
   },
 })
 </script>

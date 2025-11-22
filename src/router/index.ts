@@ -21,7 +21,7 @@ const router = createRouter({
       component: IndexView,
       children: [
         {
-          path: '',
+          path: 'index',
           name: 'Home',
           component: HomeView,
         },
@@ -32,7 +32,7 @@ const router = createRouter({
         },
         {
           path: 'calendarForm/:id',
-          name: 'CalendarForm/',
+          name: 'CalendarForm',
           component: CalendarForm,
         },
         {
