@@ -22,11 +22,13 @@
         <div class="mb-3">
           <label class="form-label d-block">啟用</label>
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" id="activeTrue" :value="true" v-model="special.isActive" />
+            <input class="form-check-input" type="radio" id="activeTrue" value="true"
+              v-model="special.isActiveString" />
             <label class="form-check-label" for="activeTrue">是</label>
           </div>
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" id="activeFalse" :value="false" v-model="special.isActive" />
+            <input class="form-check-input" type="radio" id="activeFalse" value="false"
+              v-model="special.isActiveString" />
             <label class="form-check-label" for="activeFalse">否</label>
           </div>
         </div>
@@ -45,11 +47,11 @@
                   </tr>
                 </thead>
                 <tbody>
-                  <tr>
-                    <td class="cell">{{ special.roomName }}</td>
+                  <tr v-for="(obj, idx) in list" :key="obj.id">
+                    <td class="cell">{{ obj.name }}</td>
                     <td class="cell">
-                      <input type="hidden" v-model.number="special.roomId" />
-                      <input type="number" class="form-control" v-model.number="special.price" />
+                      <input type="hidden" class="form-control" v-model.number="list[idx].id" />
+                      <input type="number" class="form-control" v-model.number="list[idx].price" />
                     </td>
                   </tr>
                 </tbody>
@@ -83,53 +85,29 @@ const formatDate = (dateString: string) => {
   const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' }
   return new Date(dateString).toLocaleDateString('zh-TW', options)
 }
-// convert yyyy-mm-dd to ISO (local midnight)
-const formatDateToISO = (yyyyMMdd?: string | null) => {
-  if (!yyyyMMdd) return null
-  const parts = String(yyyyMMdd).split('-').map(Number)
-  if (parts.length < 3) return null
-  const [y, m, d] = parts
-  if (!y || !m || !d) return null
-  return new Date(y, m - 1, d).toISOString()
-}
-interface specialday {
+interface RoomRow {
   id: number
-  name: string
-  // store dates as YYYY-MM-DD strings for input[type=date]
-  startDate: string
-  endDate: string
-  isActive: boolean
-  memo: string
   houseId: number
-  roomId: number
-  roomName: string
+  name: string
   price: number
 }
-
+const special = ref({
+  name: '',
+  startDate: '',
+  endDate: '',
+  isActiveString: 'true', // 用字串綁定 radio，儲存時轉成 boolean
+  memo: ''
+})
 
 export default defineComponent({
-  name: 'SpecialDayForm',
+  name: 'SpecialDayNewForm',
   setup() {
     const route = useRoute()
     const router = useRouter()
-    // id undefined = 0
-    const id = route.params.id as string | undefined
+    const id = route.params.id as string
 
     const loading = ref(false)
     const error = ref<string | null>(null)
-    // initialize special so template v-model won't be undefined
-    const special = ref<specialday>({
-      id: Number(id) || 0,
-      name: '',
-      startDate: new Date().toISOString(),
-      endDate: new Date().toISOString(),
-      isActive: true,
-      memo: '',
-      houseId: 0,
-      roomId: 0,
-      roomName: '',
-      price: 0
-    });
     const getErrorMessage = (err: unknown) => {
       if (!err) return '發生錯誤'
       if (typeof err === 'string') return err
@@ -144,27 +122,19 @@ export default defineComponent({
     }
 
 
-    const fetchRoom = async (id: string) => {
+    const list = ref<RoomRow[]>([])
+    const fetchRoom = async (houseId: string) => {
+
       loading.value = true
       error.value = null
       try {
-        const res = await axios.get(`${apiUrl}/specialday/form?id=${id}`)
-        const data = res.data?.data ?? res.data ?? null
-        if (data) {
-          special.value = {
-            id: data.id ?? Number(id) ?? 0,
-            name: data.name ?? '',
-            startDate: data.startDate ? formatDateToInput(String(data.startDate)) : '',
-            endDate: data.endDate ? formatDateToInput(String(data.endDate)) : '',
-            isActive: typeof data.isActive === 'boolean' ? data.isActive : (String(data.isActive) === 'true'),
-            memo: data.memo ?? '',
-            houseId: data.houseId ?? 0,
-            roomId: data.roomId ?? 0,
-            roomName: data.room.name ?? '',
-            price: data.price ?? 0
-          }
-        }
-        console.log('載入的 specialday 資料', special.value)
+        const res = await axios.get<RoomRow[]>(`${apiUrl}/specialday/newform?houseId=${houseId}`)
+        list.value = res.data || []
+        //price 初始值設 0
+        list.value.forEach(item => {
+          item.price = 0
+        })
+        console.log('載入的 room 資料', list.value)
       } catch (err: unknown) {
         error.value = getErrorMessage(err)
       } finally {
@@ -180,22 +150,36 @@ export default defineComponent({
       loading.value = true
       error.value = null
       try {
+        //payload[]
+        const payload = list.value.map(item => ({
+          houseId: Number(id),
+          roomId: item.id,
+          name: special.value.name,
+          startDate: new Date(special.value.startDate),
+          endDate: new Date(special.value.endDate),
+          isActive: special.value.isActiveString === 'true',
+          memo: special.value.memo || null,
+          price: item.price
+        }))
 
-        const payload = {
-          id: special.value?.id,
-          name: special.value?.name,
-          startDate: new Date(special.value?.startDate),
-          endDate: new Date(special.value?.endDate),
-          isActive: special.value?.isActive,
-          memo: special.value?.memo || null,
-          roomId: special.value?.roomId,
-          price: special.value?.price
+
+        //status
+        const res = await axios.post(`${apiUrl}/specialday/form`, payload)
+        console.log('儲存回應', res)
+        if (res.status !== 200) {
+          throw new Error('日期區間重複')
+        } else {
+          //清除物件
+          special.value = {
+            name: '',
+            startDate: '',
+            endDate: '',
+            isActiveString: 'true',
+            memo: ''
+          }
+          router.back()
         }
 
-
-        await axios.put(`${apiUrl}/specialday/form?id=${id}`, payload)
-
-        router.back()
       } catch (err: unknown) {
         error.value = getErrorMessage(err) || '儲存失敗'
       } finally {
@@ -207,7 +191,7 @@ export default defineComponent({
 
     const goBack = () => router.back()
 
-    return { loading, error, special, onSave, goBack, formatDate, formatDateToInput }
+    return { loading, error, list, special, onSave, goBack, formatDate, formatDateToInput }
   }
 })
 </script>

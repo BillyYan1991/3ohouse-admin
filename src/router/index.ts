@@ -5,6 +5,7 @@ import HomeView from '../views/Home.vue'
 import BookingForm from '../views/BookingForm.vue'
 import CalendarForm from '../views/CalendarForm.vue'
 import SpecialdayForm from '../views/SpecialdayForm.vue'
+import SpecialdayNewForm from '../views/SpecialdayNewForm.vue'
 import SpecialdayList from '../views/SpecialdayList.vue'
 import NotFoundView from '../views/NotFound.vue'
 import { isLoggedIn } from '@/utils/auth'
@@ -40,7 +41,12 @@ const router = createRouter({
           component: SpecialdayList,
         },
         {
-          path: 'specialDayForm/:houseId?',
+          path: 'specialDayNewForm/:id?',
+          name: 'SpecialDayNewForm',
+          component: SpecialdayNewForm,
+        },
+        {
+          path: 'specialDayForm/:id',
           name: 'SpecialDayForm',
           component: SpecialdayForm,
         },

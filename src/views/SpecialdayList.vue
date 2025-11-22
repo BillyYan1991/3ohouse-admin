@@ -1,6 +1,10 @@
 <template>
   <div class="app-content pt-3 p-md-3 p-lg-4">
     <h1 class="app-page-title">特別價格</h1>
+    <router-link :to="{ name: 'SpecialDayNewForm', params: { id: houseId } }" class="btn app-btn-primary mb-3"
+      style="color:white; text-decoration:none;">
+      新增特別價格
+    </router-link>
     <div class="tab-pane fade active show" id="orders-all" role="tabpanel" aria-labelledby="orders-all-tab">
       <div class="app-card app-card-orders-table shadow-sm mb-5">
         <div class="app-card-body">
@@ -75,12 +79,14 @@ export default defineComponent({
     const route = useRoute()
     console.log('route params', route.params)
     const houseId = route.params.id as string | undefined
+
+
+
     onMounted(async () => {
       try {
         const res = await axios.get<roomSpecialDay[]>(`${apiUrl}/specialday/list?houseId=${houseId}`)
         list.value = res.data || []
         console.log('房型資料', list.value)
-
       } catch (err) {
         list.value = []
         console.error('無法載入房型資料', err)
@@ -89,7 +95,7 @@ export default defineComponent({
 
 
 
-    return { list, formatDate }
+    return { list, formatDate, houseId }
   }
 })
 </script>
