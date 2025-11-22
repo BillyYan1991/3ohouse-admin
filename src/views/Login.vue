@@ -55,7 +55,9 @@ export default defineComponent({
 
     const form = ref({ email: '', password: '' })
     const error = ref('')
-    const base = ((import.meta.env.VITE_API_BASE as string) || '/api').replace(/\/$/, '')
+    const base = import.meta.env.VITE_API_BASE
+      ? (import.meta.env.VITE_API_BASE as string).replace(/\/$/, '')
+      : '/api'
 
 
     function onReset() {
@@ -85,110 +87,123 @@ export default defineComponent({
       }
     }
 
+    // ===== module-level singletons (避免重複載入/初始化) =====
+    let gsiLoadPromise: Promise<void> | null = null
+    let gsiInited = false
+
+    function loadGsiOnce(): Promise<void> {
+      if (gsiLoadPromise) return gsiLoadPromise
+
+      gsiLoadPromise = new Promise<void>((resolve, reject) => {
+        const win = window as any
+        if (win.google?.accounts?.id) {
+          resolve()
+          return
+        }
+
+        // 若已存在 script，直接綁 load/error
+        const existing = document.querySelector('script[data-gsi="1"]') as HTMLScriptElement | null
+        if (existing) {
+          existing.addEventListener('load', () => resolve())
+          existing.addEventListener('error', () => reject(new Error('載入 Google GSI 失敗')))
+          return
+        }
+
+        const script = document.createElement('script')
+        script.src = 'https://accounts.google.com/gsi/client'
+        script.defer = true
+        script.dataset.gsi = '1'
+        script.onload = () => resolve()
+        script.onerror = () => reject(new Error('載入 Google GSI 失敗'))
+        document.head.appendChild(script)
+      })
+
+      return gsiLoadPromise
+    }
+
+    function getGoogleIdApi() {
+      const win = window as any
+      return win.google?.accounts?.id as
+        | {
+          initialize: (opts: Record<string, any>) => void
+          prompt: () => void
+        }
+        | undefined
+    }
+
+    // ===== your login function =====
     async function startGoogleLogin() {
       error.value = ''
+
       const googleClientId = (import.meta.env.VITE_GOOGLE_CLIENT_ID as string) || ''
       if (!googleClientId) {
         error.value = '缺少 Google client id，請設定 VITE_GOOGLE_CLIENT_ID'
         return
       }
 
-      // 動態載入 GSI 腳本（如果尚未載入）
-      const ensureGsiLoaded = (): Promise<void> => {
-        return new Promise((resolve, reject) => {
-          const win = window as unknown as Record<string, unknown>
-          const googleObj = win['google'] as Record<string, unknown> | undefined
-          const accounts = googleObj?.['accounts'] as Record<string, unknown> | undefined
-          const idObj = accounts?.['id'] as Record<string, unknown> | undefined
-          if (idObj && typeof idObj === 'object') return resolve()
-
-          // 如果已經插入 <script data-gsi>，但尚未載入 google 物件，等候該 script 的 load/error
-          const existing = document.querySelector('script[data-gsi]') as HTMLScriptElement | null
-          if (existing) {
-            existing.addEventListener('load', () => resolve())
-            existing.addEventListener('error', () => reject(new Error('載入 Google GSI 失敗')))
-            return
-          }
-
-          // 否則新增 script
-          const script = document.createElement('script')
-          script.setAttribute('src', 'https://accounts.google.com/gsi/client')
-          script.setAttribute('defer', 'true')
-          script.setAttribute('data-gsi', '1')
-          script.onload = () => resolve()
-          script.onerror = () => reject(new Error('載入 Google GSI 失敗'))
-          document.head.appendChild(script)
-        })
-      }
-
       try {
-        await ensureGsiLoaded()
+        await loadGsiOnce()
 
-        const win = window as unknown as Record<string, unknown>
-        // 初始化
-        const googleObj = win['google'] as Record<string, unknown> | undefined
-        const accountsObj = googleObj?.['accounts'] as Record<string, unknown> | undefined
-        const idObj = accountsObj?.['id'] as Record<string, unknown> | undefined
-        const initializeFn = idObj?.['initialize'] as ((opts: Record<string, unknown>) => void) | undefined
-        const promptFn = idObj?.['prompt'] as (() => void) | undefined
+        const idApi = getGoogleIdApi()
+        if (!idApi) throw new Error('Google GSI 尚未可用')
 
-        initializeFn?.({
-          client_id: googleClientId,
-          callback: async (resp: unknown) => {
-            try {
-              const idToken = (resp as Record<string, unknown>)['credential'] as string | undefined
-              if (!idToken) throw new Error('Google 回傳的 credential 為空')
-
-              // 丟給後端驗證 + 換你自己的 token
-              const r = await fetch(`${base}/user/oauth/google`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ idToken }),
-              })
-
-              if (!r.ok) {
-                let msg = 'Google 登入失敗'
-                try {
-                  const j = await r.json()
-                  msg = j.message || j.error || JSON.stringify(j)
-                } catch {
-                  msg = await r.text()
-                }
-                throw new Error(msg)
-              }
-
-              const data = await r.json()
-              const token = data.token || data.accessToken || data.auth_token || null
-              if (!token) throw new Error('後端未回傳 token')
-
-              // 儲存 token（使用專案的 helper）
+        // initialize 只會做一次
+        if (!gsiInited) {
+          idApi.initialize({
+            client_id: googleClientId,
+            callback: async (resp: unknown) => {
               try {
-                setToken(token)
-              } catch {
-                // fallback
-                localStorage.setItem('auth_token', token)
-              }
+                const idToken = (resp as any)?.credential as string | undefined
+                if (!idToken) throw new Error('Google 回傳的 credential 為空')
 
-              // 導回 redirect 或首頁
-              const redirect = (router.currentRoute.value.query.redirect as string) || null
-              if (redirect) {
-                await router.replace(redirect)
-              } else {
-                await router.replace({ name: 'Home' })
-              }
-            } catch (e: unknown) {
-              const err = e as unknown
-              error.value = (err as Error)?.message || 'Google 登入處理失敗'
-              console.error('google callback error', err)
-            }
-          },
-        })
+                const r = await fetch(`${base}/api/user/oauth/google`, {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ idToken }),
+                })
 
-        // 顯示一鍵登入提示（或彈窗）
-        promptFn?.()
-      } catch (e: unknown) {
-        const err = e as unknown
-        error.value = (err as Error)?.message || '載入 Google 登入套件失敗'
+                if (!r.ok) {
+                  let msg = 'Google 登入失敗'
+                  try {
+                    const j = await r.json()
+                    msg = j.message || j.error || JSON.stringify(j)
+                  } catch {
+                    msg = await r.text()
+                  }
+                  throw new Error(msg)
+                }
+
+                const data = await r.json()
+                const token =
+                  data.token || data.accessToken || data.auth_token || null
+                if (!token) throw new Error('後端未回傳 token')
+
+                try {
+                  setToken(token)
+                } catch {
+                  localStorage.setItem('auth_token', token)
+                }
+
+                const redirect = (router.currentRoute.value.query.redirect as string) || null
+                if (redirect) {
+                  await router.replace(redirect)
+                } else {
+                  await router.replace({ name: 'Home' })
+                }
+              } catch (e: any) {
+                error.value = e?.message || 'Google 登入處理失敗'
+                console.error('google callback error', e)
+              }
+            },
+          })
+
+          gsiInited = true
+        }
+
+        // 每次呼叫只 prompt，不會重複 initialize
+        idApi.prompt()
+      } catch (e: any) {
+        error.value = e?.message || '載入 Google 登入套件失敗'
       }
     }
 
