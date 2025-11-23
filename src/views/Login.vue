@@ -29,9 +29,9 @@
                 </div>
                 <div v-if="error" class="mt-3 text-danger">{{ error }}</div>
                 <div class="mt-3">
-                  <button type="button" class="btn btn-outline-danger w-100" @click="startGoogleLogin">
-                    使用 Google 登入
-                  </button>
+                  <div class="d-flex justify-content-center">
+                    <div id="googleBtn"></div>
+                  </div>
                 </div>
               </form>
             </div>
@@ -87,51 +87,87 @@ export default defineComponent({
       }
     }
 
-    // ===== module-level singletons (避免重複載入/初始化) =====
-    let gsiLoadPromise: Promise<void> | null = null
     let gsiInited = false
-
-    function loadGsiOnce(): Promise<void> {
-      if (gsiLoadPromise) return gsiLoadPromise
-
-      gsiLoadPromise = new Promise<void>((resolve, reject) => {
-        const win = window as any
-        if (win.google?.accounts?.id) {
-          resolve()
-          return
-        }
-
-        // 若已存在 script，直接綁 load/error
-        const existing = document.querySelector('script[data-gsi="1"]') as HTMLScriptElement | null
-        if (existing) {
-          existing.addEventListener('load', () => resolve())
-          existing.addEventListener('error', () => reject(new Error('載入 Google GSI 失敗')))
-          return
-        }
-
-        const script = document.createElement('script')
-        script.src = 'https://accounts.google.com/gsi/client'
-        script.defer = true
-        script.dataset.gsi = '1'
-        script.onload = () => resolve()
-        script.onerror = () => reject(new Error('載入 Google GSI 失敗'))
-        document.head.appendChild(script)
-      })
-
-      return gsiLoadPromise
-    }
 
     function getGoogleIdApi() {
       const win = window as any
       return win.google?.accounts?.id as
         | {
           initialize: (opts: Record<string, any>) => void
-          prompt: () => void
+          renderButton: (el: HTMLElement, opts: Record<string, any>) => void
         }
         | undefined
     }
 
-    // ===== your login function =====
+    // 只載入一次 GSI script
+    function loadGsiOnce(): Promise<void> {
+      return new Promise((resolve, reject) => {
+        const existing = document.querySelector('script[data-gsi]')
+        if (existing) {
+          existing.addEventListener('load', () => resolve())
+          existing.addEventListener('error', () => reject())
+          return
+        }
+
+        const script = document.createElement('script')
+        script.src = 'https://accounts.google.com/gsi/client'
+        script.async = true
+        script.defer = true
+        script.dataset.gsi = '1'
+        script.onload = () => resolve()
+        script.onerror = () => reject()
+        document.head.appendChild(script)
+      })
+    }
+
+    // Google callback（沿用你原本的流程）
+    async function onGoogleCallback(resp: unknown) {
+      try {
+        const idToken = (resp as any)?.credential as string | undefined
+        if (!idToken) throw new Error('Google 回傳的 credential 為空')
+
+        const r = await fetch(`${base}/api/user/oauth/google`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idToken }),
+        })
+
+        if (!r.ok) {
+          let msg = 'Google 登入失敗'
+          try {
+            const j = await r.json()
+            msg = j.message || j.error || JSON.stringify(j)
+          } catch {
+            msg = await r.text()
+          }
+          throw new Error(msg)
+        }
+
+        const data = await r.json()
+        const token =
+          data.token || data.accessToken || data.auth_token || null
+        if (!token) throw new Error('後端未回傳 token')
+
+        try {
+          setToken(token)
+        } catch {
+          localStorage.setItem('auth_token', token)
+        }
+
+        const redirect =
+          (router.currentRoute.value.query.redirect as string) || null
+        if (redirect) {
+          await router.replace(redirect)
+        } else {
+          await router.replace({ name: 'Home' })
+        }
+      } catch (e: any) {
+        error.value = e?.message || 'Google 登入處理失敗'
+        console.error('google callback error', e)
+      }
+    }
+
+    // ======= 你要呼叫的登入函式 =======
     async function startGoogleLogin() {
       error.value = ''
 
@@ -147,68 +183,39 @@ export default defineComponent({
         const idApi = getGoogleIdApi()
         if (!idApi) throw new Error('Google GSI 尚未可用')
 
-        // initialize 只會做一次
+        // initialize（一次就好）
         if (!gsiInited) {
           idApi.initialize({
             client_id: googleClientId,
-            callback: async (resp: unknown) => {
-              try {
-                const idToken = (resp as any)?.credential as string | undefined
-                if (!idToken) throw new Error('Google 回傳的 credential 為空')
-
-                const r = await fetch(`${base}/api/user/oauth/google`, {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ idToken }),
-                })
-
-                if (!r.ok) {
-                  let msg = 'Google 登入失敗'
-                  try {
-                    const j = await r.json()
-                    msg = j.message || j.error || JSON.stringify(j)
-                  } catch {
-                    msg = await r.text()
-                  }
-                  throw new Error(msg)
-                }
-
-                const data = await r.json()
-                const token =
-                  data.token || data.accessToken || data.auth_token || null
-                if (!token) throw new Error('後端未回傳 token')
-
-                try {
-                  setToken(token)
-                } catch {
-                  localStorage.setItem('auth_token', token)
-                }
-
-                const redirect = (router.currentRoute.value.query.redirect as string) || null
-                if (redirect) {
-                  await router.replace(redirect)
-                } else {
-                  await router.replace({ name: 'Home' })
-                }
-              } catch (e: any) {
-                error.value = e?.message || 'Google 登入處理失敗'
-                console.error('google callback error', e)
-              }
-            },
+            callback: onGoogleCallback,
           })
+
+          // render 官方按鈕（行動裝置最穩）
+          const el = document.getElementById('googleBtn')
+          if (el) {
+            idApi.renderButton(el, {
+              theme: 'outline',
+              size: 'large',
+              width: 300,
+            })
+          }
 
           gsiInited = true
         }
 
-        // 每次呼叫只 prompt，不會重複 initialize
-        idApi.prompt()
+        // ❌ 不要 prompt()
+        // ❌ 不要 popup
+        // Google 會在官方按鈕點擊時自動處理登入
+
       } catch (e: any) {
         error.value = e?.message || '載入 Google 登入套件失敗'
       }
     }
 
+
     // 如果後端在重導到 /login 時帶上 token，這邊會接收並儲存
     onMounted(() => {
+      startGoogleLogin()
       const q = router.currentRoute.value.query
       const token = (q.token as string) || null
       if (token) {

@@ -6,13 +6,13 @@
 </template>
 
 <script lang="ts">
-import { defineComponent } from 'vue'
+import { defineComponent, computed } from 'vue'
 import { useRoute } from 'vue-router'
 export default defineComponent({
   name: 'CalendarForm',
   setup() {
     const route = useRoute()
-    const calendarId = route.params.id as string | undefined
+    const calendarId = computed(() => (route.params.id as string) || '')
     return {
       calendarId
     }
