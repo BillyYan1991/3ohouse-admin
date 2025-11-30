@@ -7,6 +7,7 @@ import CalendarForm from '../views/CalendarForm.vue'
 import SpecialdayForm from '../views/SpecialdayForm.vue'
 import SpecialdayNewForm from '../views/SpecialdayNewForm.vue'
 import SpecialdayList from '../views/SpecialdayList.vue'
+import FinancialForm from '@/views/FinancialForm.vue'
 import NotFoundView from '../views/NotFound.vue'
 import { isLoggedIn } from '@/utils/auth'
 
@@ -49,6 +50,11 @@ const router = createRouter({
           path: 'specialDayForm/:id',
           name: 'SpecialDayForm',
           component: SpecialdayForm,
+        },
+        {
+          path: 'financialForm',
+          name: 'FinancialForm',
+          component: FinancialForm,
         },
       ],
     },

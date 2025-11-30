@@ -170,8 +170,7 @@ function toggleSidepanel() {
           <ul class="app-menu list-unstyled accordion" id="menu-accordion">
             <li class="nav-item">
               <router-link :to="{ name: 'Home' }" class="nav-link" active-class="active">
-                <span class="nav-link-text" style="font-size: 25px;">
-                  首頁</span>
+                <span class="nav-link-text" style="font-size: 25px;"><strong>首頁</strong></span>
               </router-link>
               <!--//nav-link-->
             </li><!--//nav-item-->
@@ -180,7 +179,7 @@ function toggleSidepanel() {
               <a class="nav-link submenu-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#submenu-1"
                 aria-expanded="true" aria-controls="submenu-1">
 
-                <span class="nav-link-text" style="font-size: 25px;">日曆</span>
+                <span class="nav-link-text" style="font-size: 25px;"><strong>日曆</strong></span>
                 <span class="submenu-arrow">
                   <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-down" fill="currentColor"
                     xmlns="http://www.w3.org/2000/svg">
@@ -218,7 +217,7 @@ function toggleSidepanel() {
             <li class="nav-item has-submenu">
               <a class="nav-link submenu-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#submenu-2"
                 aria-expanded="true" aria-controls="submenu-2">
-                <span class="nav-link-text" style="font-size: 25px;">特別價格</span>
+                <span class="nav-link-text" style="font-size: 25px;"><strong>特別價格</strong></span>
                 <span class="submenu-arrow">
                   <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-down" fill="currentColor"
                     xmlns="http://www.w3.org/2000/svg">
@@ -249,7 +248,12 @@ function toggleSidepanel() {
                 </ul>
               </div>
             </li>
-
+            <li class="nav-item">
+              <router-link :to="{ name: 'FinancialForm' }" class="nav-link" active-class="active">
+                <span class="nav-link-text" style="font-size: 25px;"><strong>財務</strong></span>
+              </router-link>
+              <!--//nav-link-->
+            </li><!--//nav-item-->
           </ul><!--//app-menu-->
         </nav><!--//app-nav-->
 
