@@ -174,6 +174,12 @@ function toggleSidepanel() {
               </router-link>
               <!--//nav-link-->
             </li><!--//nav-item-->
+            <li class="nav-item">
+              <router-link :to="{ name: 'BookingList' }" class="nav-link" active-class="active">
+                <span class="nav-link-text" style="font-size: 25px;"><strong>清單</strong></span>
+              </router-link>
+              <!--//nav-link-->
+            </li><!--//nav-item-->
             <li class="nav-item has-submenu">
               <!--//Bootstrap Icons: https://icons.getbootstrap.com/ -->
               <a class="nav-link submenu-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#submenu-1"
@@ -241,7 +247,7 @@ function toggleSidepanel() {
                       class="nav-link" active-class="active">
                       <span class="nav-link-text">上水</span>
                     </router-link></li>
-                  <li class="submenu-item"><router-link :to="{ name: 'SpecialDayList', params: { id: '1' } }"
+                  <li class="submenu-item"><router-link :to="{ name: 'SpecialDayList', params: { id: '4' } }"
                       class="nav-link" active-class="active">
                       <span class="nav-link-text">花水木</span>
                     </router-link></li>

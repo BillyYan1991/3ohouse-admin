@@ -1,7 +1,9 @@
 <template>
   <div class="app-content pt-3 p-md-3 p-lg-4">
-    <h1 class="app-page-title">特別價格</h1>
-
+    <h1 class="app-page-title" v-if="houseId == '1'">無憂特別價格</h1>
+    <h1 class="app-page-title" v-if="houseId == '2'">寄寓特別價格</h1>
+    <h1 class="app-page-title" v-if="houseId == '3'">上水特別價格</h1>
+    <h1 class="app-page-title" v-if="houseId == '4'">花水木特別價格</h1>
     <div v-if="loading">載入中...</div>
     <div v-else-if="error" class="text-danger">{{ error }}</div>
     <div v-else>
@@ -12,12 +14,12 @@
         </div>
         <div class="mb-3">
           <label class="form-label">起始日期</label>
-          <input type="date" class="form-control" v-model="special.startDate" />
+          <input type="date" class="form-control" v-model="special.startDate" :min="minDate" />
           <!--sub 0~10-->
         </div>
         <div class="mb-3">
           <label class="form-label">結束日期</label>
-          <input type="date" class="form-control" v-model="special.endDate" />
+          <input type="date" class="form-control" v-model="special.endDate" :min="minDate" />
         </div>
         <div class="mb-3">
           <label class="form-label d-block">啟用</label>
@@ -41,16 +43,20 @@
                 <thead>
                   <tr>
                     <th style="background-color:azure" class=" cell">房型</th>
-                    <th style="background-color:azure" class="cell">變額</th>
+                    <th style="background-color:azure" class=" cell">原始金額</th>
+                    <th style="background-color:azure" class="cell">調整金額</th>
+                    <th style="background-color:azure" class="cell">變價</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
                     <td class="cell">{{ special.roomName }}</td>
+                    <td class="cell">{{ special.originalPrice }}</td>
                     <td class="cell">
                       <input type="hidden" v-model.number="special.roomId" />
                       <input type="number" class="form-control" v-model.number="special.price" />
                     </td>
+                    <td class="cell">{{ special.price + special.originalPrice }}</td>
                   </tr>
                 </tbody>
               </table>
@@ -83,15 +89,7 @@ const formatDate = (dateString: string) => {
   const options: Intl.DateTimeFormatOptions = { year: 'numeric', month: '2-digit', day: '2-digit' }
   return new Date(dateString).toLocaleDateString('zh-TW', options)
 }
-// convert yyyy-mm-dd to ISO (local midnight)
-const formatDateToISO = (yyyyMMdd?: string | null) => {
-  if (!yyyyMMdd) return null
-  const parts = String(yyyyMMdd).split('-').map(Number)
-  if (parts.length < 3) return null
-  const [y, m, d] = parts
-  if (!y || !m || !d) return null
-  return new Date(y, m - 1, d).toISOString()
-}
+// (formatDateToISO removed; not used)
 interface specialday {
   id: number
   name: string
@@ -103,6 +101,7 @@ interface specialday {
   houseId: number
   roomId: number
   roomName: string
+  originalPrice: number
   price: number
 }
 
@@ -128,6 +127,7 @@ export default defineComponent({
       houseId: 0,
       roomId: 0,
       roomName: '',
+      originalPrice: 0,
       price: 0
     });
     const getErrorMessage = (err: unknown) => {
@@ -142,6 +142,9 @@ export default defineComponent({
         return '發生錯誤'
       }
     }
+
+    const minDate = formatDateToInput(new Date().toISOString())
+
 
 
     const fetchRoom = async (id: string) => {
@@ -161,6 +164,7 @@ export default defineComponent({
             houseId: data.houseId ?? 0,
             roomId: data.roomId ?? 0,
             roomName: data.room.name ?? '',
+            originalPrice: data.room.price ?? 0,
             price: data.price ?? 0
           }
         }
@@ -177,8 +181,19 @@ export default defineComponent({
     }
 
     const onSave = async () => {
-      loading.value = true
+      // client-side validation: start/end dates must not be before today
       error.value = null
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const s = special.value.startDate ? new Date(special.value.startDate) : null
+      const e = special.value.endDate ? new Date(special.value.endDate) : null
+      if (!s || isNaN(s.getTime())) { error.value = '請輸入有效的起始日期'; return }
+      s.setHours(0, 0, 0, 0)
+      if (s < today) { error.value = '起始日期不可小於今天'; return }
+      if (!e || isNaN(e.getTime())) { error.value = '請輸入有效的結束日期'; return }
+      e.setHours(0, 0, 0, 0)
+      if (e < s) { error.value = '結束日期不可小於起始日期'; return }
+      loading.value = true
       try {
 
         const payload = {
@@ -207,7 +222,9 @@ export default defineComponent({
 
     const goBack = () => router.back()
 
-    return { loading, error, special, onSave, goBack, formatDate, formatDateToInput }
+    const houseId = ref(route.params.houseId as string | undefined)
+
+    return { loading, error, special, onSave, goBack, formatDate, formatDateToInput, houseId, minDate }
   }
 })
 </script>

@@ -1,6 +1,9 @@
 <template>
   <div class="app-content pt-3 p-md-3 p-lg-4">
-    <h1 class="app-page-title">特別價格</h1>
+    <h1 class="app-page-title" v-if="houseId == '1'">無憂特別價格</h1>
+    <h1 class="app-page-title" v-if="houseId == '2'">寄寓特別價格</h1>
+    <h1 class="app-page-title" v-if="houseId == '3'">上水特別價格</h1>
+    <h1 class="app-page-title" v-if="houseId == '4'">花水木特別價格</h1>
 
     <div v-if="loading">載入中...</div>
     <div v-else-if="error" class="text-danger">{{ error }}</div>
@@ -12,12 +15,12 @@
         </div>
         <div class="mb-3">
           <label class="form-label">起始日期</label>
-          <input type="date" class="form-control" v-model="special.startDate" />
+          <input type="date" class="form-control" v-model="special.startDate" :min="minDate" />
           <!--sub 0~10-->
         </div>
         <div class="mb-3">
           <label class="form-label">結束日期</label>
-          <input type="date" class="form-control" v-model="special.endDate" />
+          <input type="date" class="form-control" v-model="special.endDate" :min="minDate" />
         </div>
         <div class="mb-3">
           <label class="form-label d-block">啟用</label>
@@ -105,9 +108,11 @@ export default defineComponent({
     const route = useRoute()
     const router = useRouter()
     const id = route.params.id as string
+    const houseId = ref(id)
 
     const loading = ref(false)
     const error = ref<string | null>(null)
+    const minDate = formatDateToInput(new Date().toISOString())
     const getErrorMessage = (err: unknown) => {
       if (!err) return '發生錯誤'
       if (typeof err === 'string') return err
@@ -147,8 +152,19 @@ export default defineComponent({
     }
 
     const onSave = async () => {
-      loading.value = true
+      // client-side validation: start/end dates must not be before today
       error.value = null
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const s = special.value.startDate ? new Date(special.value.startDate) : null
+      const e = special.value.endDate ? new Date(special.value.endDate) : null
+      if (!s || isNaN(s.getTime())) { error.value = '請輸入有效的起始日期'; return }
+      s.setHours(0, 0, 0, 0)
+      if (s < today) { error.value = '起始日期不可小於今天'; return }
+      if (!e || isNaN(e.getTime())) { error.value = '請輸入有效的結束日期'; return }
+      e.setHours(0, 0, 0, 0)
+      if (e < s) { error.value = '結束日期不可小於起始日期'; return }
+      loading.value = true
       try {
         //payload[]
         const payload = list.value.map(item => ({
@@ -188,12 +204,12 @@ export default defineComponent({
     }
 
 
-
     const goBack = () => router.back()
 
-    return { loading, error, list, special, onSave, goBack, formatDate, formatDateToInput }
+    return { loading, error, list, special, onSave, goBack, formatDate, formatDateToInput, houseId, minDate }
   }
 })
+
 </script>
 
 <style scoped>

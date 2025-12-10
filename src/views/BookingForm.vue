@@ -46,6 +46,18 @@
           <input type="number" class="form-control" style="background-color:beige;" v-model="booking.paid" />
         </div>
         <div class="mb-3">
+          <label class="form-label">電話</label>
+          <input type="number" class="form-control" :value="booking.phone" readonly />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">email</label>
+          <input type="email" class="form-control" :value="booking.email" readonly />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">末五碼</label>
+          <input type="number" class="form-control" :value="booking.paymemo" readonly />
+        </div>
+        <div class="mb-3">
           <label class="form-label">客戶備註</label>
           <textarea class="form-control" :value="booking.memo" rows="3" readonly></textarea>
         </div>
@@ -80,9 +92,9 @@
           <label class="form-label">管理員備註</label>
           <textarea class="form-control" v-model="booking.admin_memo" rows="3"></textarea>
         </div>
-        <button class="btn btn-primary ms-2" type="submit" @click.prevent="onSave">儲存</button>
-        <button class="btn bg-danger ms-2" type="submit" @click.prevent="onCancel">取消</button>
-        <button class="btn btn-secondary ms-2" type="button" @click="goBack">返回</button>
+        <button class="btn btn-primary ms-2" type="submit" @click.prevent="onSave" :disabled="saving">儲存</button>
+        <button class="btn bg-danger ms-2" type="submit" @click.prevent="onCancel" :disabled="cancelling">取消</button>
+        <button class="btn btn-secondary ms-2" type="button" @click="goBack" :disabled="navigating">返回</button>
       </form>
     </div>
   </div>
@@ -119,6 +131,11 @@ export default defineComponent({
     const error = ref<string | null>(null)
     const booking = ref<Partial<Booking>>({})
 
+    // 防連點 flags
+    const saving = ref(false)
+    const cancelling = ref(false)
+    const navigating = ref(false)
+
     const getErrorMessage = (err: unknown) => {
       if (!err) return '發生錯誤'
       if (typeof err === 'string') return err
@@ -154,6 +171,8 @@ export default defineComponent({
     }
 
     const onSave = async () => {
+      if (saving.value) return
+      saving.value = true
       // 範例：如果有 id，put 更新，否則 post 建立
       try {
         if (id) {
@@ -165,17 +184,28 @@ export default defineComponent({
             status: 2
           }
           await axios.put(`${apiUrl}/booking/form?id=${id}`, payload)
+          const fgparam = route.query.fg as string | undefined
+          if (fgparam === '1') {
+            router.replace('/index')
+          } else {
+            router.back()
+          }
         } else {
           //尚未實作後台新增
           // await axios.post(`${apiUrl}/booking/form`, booking.value)
         }
-        router.back()
+
       } catch (err: unknown) {
         error.value = getErrorMessage(err) || '儲存失敗'
+      }
+      finally {
+        saving.value = false
       }
     }
 
     const onCancel = async () => {
+      if (cancelling.value) return
+      cancelling.value = true
       // 範例：如果有 id，put 更新，否則 post 建立
       try {
         if (id) {
@@ -191,15 +221,28 @@ export default defineComponent({
           //尚未實作後台新增
           // await axios.post(`${apiUrl}/booking/form`, booking.value)
         }
-        router.back()
+        const fgparam = route.query.fg as string | undefined
+        if (fgparam === '1') {
+          router.replace('/index')
+        } else {
+          router.back()
+        }
       } catch (err: unknown) {
         error.value = getErrorMessage(err) || '儲存失敗'
       }
+      finally {
+        cancelling.value = false
+      }
     }
 
-    const goBack = () => router.back()
+    const goBack = () => {
+      if (navigating.value) return
+      navigating.value = true
+      router.back()
+      // navigating flag will be irrelevant after navigation
+    }
 
-    return { loading, error, booking, onSave, goBack, onCancel, formatDate, formatDateToInput }
+    return { loading, error, booking, onSave, goBack, onCancel, formatDate, formatDateToInput, saving, cancelling, navigating }
   }
 })
 </script>

@@ -1,6 +1,6 @@
 <template>
   <div class="app-content pt-3 p-md-3 p-lg-4">
-    <h1 class="app-page-title">待處理</h1>
+    <h1 class="app-page-title">列表</h1>
     <div class="tab-pane fade active show" id="orders-all" role="tabpanel" aria-labelledby="orders-all-tab">
       <div class="app-card app-card-orders-table shadow-sm mb-5">
         <div class="app-card-body">
@@ -15,12 +15,13 @@
                   <th class="cell">退房日期</th>
                   <th class="cell">幾晚</th>
                   <th class="cell">金額</th>
+                  <th class="cell">末五碼</th>
+                  <th class="cell">狀態</th>
                   <th class="cell"></th>
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="booking in bookings" :key="booking.id" :class="{ 'bg-old': isCreatedBeforeToday(booking) }"
-                  :data-created="booking.createdAt">
+                <tr v-for="booking in bookings" :key="booking.id">
                   <td class="cell">{{ booking.house.name }}</td>
                   <td class="cell"><span class="truncate">{{ roomNames(booking.details) }}</span></td>
                   <td class="cell">{{ booking.userName }}</td>
@@ -28,7 +29,13 @@
                   <td class="cell"><span class="cell-data">{{ formatDate(booking.checkOut) }}</span></td>
                   <td class="cell">{{ booking.nights }}</td>
                   <td class="cell">{{ booking.totalPrice }}</td>
-                  <td class="cell"><router-link class="btn app-btn-primary"
+                  <td class="cell">{{ booking.paymemo }}</td>
+                  <td class="cell">
+                    <span v-if="booking.status === 1">待處理</span>
+                    <span v-else-if="booking.status === 2">已確認</span>
+                    <span v-else-if="booking.status === -1">已取消</span>
+                  </td>
+                  <td class="cell"><router-link class="btn app-btn-primary" v-if="booking.status !== -1"
                       :to="{ name: 'BookingForm', params: { id: booking.id } }">編輯</router-link></td>
                 </tr>
 
@@ -71,12 +78,12 @@ const formatDate = (dateString: string) => {
 }
 
 export default defineComponent({
-  name: 'HomeView',
+  name: 'BookingList',
   setup() {
     const bookings = ref<Booking[]>([])
     onMounted(async () => {
       try {
-        const res = await axios.get<Booking[]>(`${apiUrl}/home/pending`)
+        const res = await axios.get<Booking[]>(`${apiUrl}/booking/list`)
         bookings.value = res.data || []
         console.log('未處裡訂房資料', bookings.value)
       } catch (err) {
@@ -94,40 +101,11 @@ export default defineComponent({
       }
     }
 
-    // returns true if booking.createdAt is before today (i.e. older than today)
-    const isCreatedBeforeToday = (b: Booking) => {
-      const raw = b.createdAt
-      if (!raw) return false
-      const d = new Date(String(raw))
-      if (isNaN(d.getTime())) return false
-      d.setHours(0, 0, 0, 0)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      return d < today
-    }
-
-    return { bookings, formatDate, roomNames, isCreatedBeforeToday }
+    return { bookings, formatDate, roomNames }
   }
 })
 </script>
 
 <style scoped>
 /* simple placeholder */
-.bg-old {
-  background-color: #ffecec;
-}
-
-.table tbody tr.bg-old td {
-  background-color: #fff2f0 !important;
-  color: #7a0000;
-}
-
-.table tbody tr.bg-old td:first-child {
-  border-left: 4px solid #ff4d4f;
-  padding-left: .5rem;
-}
-
-.table tbody tr.bg-old {
-  font-weight: 600;
-}
 </style>

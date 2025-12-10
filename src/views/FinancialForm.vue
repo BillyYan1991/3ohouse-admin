@@ -17,30 +17,29 @@
 
     <div v-if="!loading">
       <div v-if="housesFiltered.length > 0">
-        <div v-for="h in housesFiltered" :key="h.houseId" class="mb-4">
-          <h5>{{ h.houseName }}</h5>
-          <table class="table table-bordered">
-            <thead>
-              <tr>
-                <th style="background-color: beige;">月份</th>
-                <th class="text-end" style="background-color: beige;">總額</th>
-                <th class="text-end" style="background-color: beige;">實付金額</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="m in 12" :key="m">
-                <td>{{ m }} 月</td>
-                <td class="text-end">{{ formatCurrency(houseMaps[h.houseId]?.[m]?.total) }}</td>
-                <td class="text-end">{{ formatCurrency(houseMaps[h.houseId]?.[m]?.paid) }}</td>
-              </tr>
-              <tr>
-                <td><strong>合計</strong></td>
-                <td class="text-end"><strong>{{ formatCurrency(computeTotalsForHouse(h.houseId).total) }}</strong></td>
-                <td class="text-end"><strong>{{ formatCurrency(computeTotalsForHouse(h.houseId).paid) }}</strong></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
+        <table class="table table-bordered">
+          <thead>
+            <tr>
+              <th>月份</th>
+              <th v-for="h in housesFiltered" :key="h.houseId" class="text-center">{{ h.houseName }}</th>
+              <th class="text-end">當月小計</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr v-for="m in 12" :key="m">
+              <td>{{ m }} 月</td>
+              <td v-for="h in housesFiltered" :key="h.houseId" class="text-end">{{
+                formatCurrency(houseMaps[h.houseId]?.[m]?.total) }}</td>
+              <td class="text-end"><strong>{{ formatCurrency(monthlySubtotal[m]) }}</strong></td>
+            </tr>
+            <tr>
+              <td><strong>合計</strong></td>
+              <td v-for="h in housesFiltered" :key="h.houseId" class="text-end"><strong>{{
+                formatCurrency(totalPerHouse[h.houseId] || 0) }}</strong></td>
+              <td class="text-end"><strong>{{ formatCurrency(overallTotal) }}</strong></td>
+            </tr>
+          </tbody>
+        </table>
       </div>
       <div v-else>
         <table class="table table-bordered">
@@ -48,19 +47,16 @@
             <tr>
               <th>月份</th>
               <th class="text-end">金額</th>
-              <th class="text-end">實付 (paid)</th>
             </tr>
           </thead>
           <tbody>
             <tr v-for="m in 12" :key="m">
               <td>{{ m }} 月</td>
               <td class="text-end">{{ formatCurrency(monthAmounts[m]?.total) }}</td>
-              <td class="text-end">{{ formatCurrency(monthAmounts[m]?.paid) }}</td>
             </tr>
             <tr>
               <td><strong>合計</strong></td>
               <td class="text-end"><strong>{{ formatCurrency(total) }}</strong></td>
-              <td class="text-end"><strong>{{ formatCurrency(paidTotal) }}</strong></td>
             </tr>
           </tbody>
         </table>
@@ -122,15 +118,41 @@ const houseMaps = computed<Record<number, Record<number, { total: number; paid: 
   return out
 })
 
-function computeTotalsForHouse(houseId: number) {
-  const map = houseMaps.value[houseId] || {}
-  let t = 0, p = 0
+// keep per-house totals available if needed
+// computeTotalsForHouse removed — totals are provided by `totalPerHouse` / `overallTotal`
+
+// 每月小計（合併所有民宿的 total）
+const monthlySubtotal = computed(() => {
+  const out: Record<number, number> = {}
   for (let i = 1; i <= 12; i++) {
-    t += Number(map[i]?.total || 0)
-    p += Number(map[i]?.paid || 0)
+    let s = 0
+    housesFiltered.value.forEach(h => {
+      const hid = Number(h.houseId) || 0
+      s += Number(houseMaps.value[hid]?.[i]?.total || 0)
+    })
+    out[i] = s
   }
-  return { total: t, paid: p }
-}
+  return out
+})
+
+// 每間民宿年合計
+const totalPerHouse = computed<Record<number, number>>(() => {
+  const out: Record<number, number> = {}
+  housesFiltered.value.forEach(h => {
+    let s = 0
+    for (let i = 1; i <= 12; i++) {
+      s += Number(houseMaps.value[h.houseId]?.[i]?.total || 0)
+    }
+    out[h.houseId] = s
+  })
+  return out
+})
+
+const overallTotal = computed(() => {
+  let s = 0
+  for (let i = 1; i <= 12; i++) s += Number(monthlySubtotal.value[i] || 0)
+  return s
+})
 
 function formatCurrency(v?: number | null) {
   if (v === undefined || v === null) return '-'
@@ -145,13 +167,7 @@ const total = computed(() => {
   return s
 })
 
-const paidTotal = computed(() => {
-  let s = 0
-  for (let i = 1; i <= 12; i++) {
-    s += Number(monthAmounts.value[i]?.paid || 0)
-  }
-  return s
-})
+// (實付欄位已隱藏 / 不顯示)
 
 async function fetchData() {
   error.value = null
