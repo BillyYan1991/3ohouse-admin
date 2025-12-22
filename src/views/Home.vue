@@ -19,7 +19,7 @@
                 </tr>
               </thead>
               <tbody>
-                <tr v-for="booking in bookings" :key="booking.id" :class="{ 'bg-old': isCreatedBeforeToday(booking) }"
+                <tr v-for="booking in bookings" :key="booking.id" :class="{ 'bg-old': isCreatedOver24Hours(booking) }"
                   :data-created="booking.createdAt">
                   <td class="cell">{{ booking.house.name }}</td>
                   <td class="cell"><span class="truncate">{{ roomNames(booking.details) }}</span></td>
@@ -94,19 +94,21 @@ export default defineComponent({
       }
     }
 
-    // returns true if booking.createdAt is before today (i.e. older than today)
-    const isCreatedBeforeToday = (b: Booking) => {
+    const isCreatedOver24Hours = (b: Booking) => {
       const raw = b.createdAt
       if (!raw) return false
-      const d = new Date(String(raw))
-      if (isNaN(d.getTime())) return false
-      d.setHours(0, 0, 0, 0)
-      const today = new Date()
-      today.setHours(0, 0, 0, 0)
-      return d < today
+
+      const createdAt = new Date(String(raw))
+      if (isNaN(createdAt.getTime())) return false
+
+      const now = Date.now()
+      const diffMs = now - createdAt.getTime()
+
+      const HOURS_24 = 24 * 60 * 60 * 1000
+      return diffMs >= HOURS_24
     }
 
-    return { bookings, formatDate, roomNames, isCreatedBeforeToday }
+    return { bookings, formatDate, roomNames, isCreatedOver24Hours }
   }
 })
 </script>

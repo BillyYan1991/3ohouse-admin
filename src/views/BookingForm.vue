@@ -92,9 +92,25 @@
           <label class="form-label">管理員備註</label>
           <textarea class="form-control" v-model="booking.admin_memo" rows="3"></textarea>
         </div>
-        <button class="btn btn-primary ms-2" type="submit" @click.prevent="onSave" :disabled="saving">儲存</button>
-        <button class="btn bg-danger ms-2" type="submit" @click.prevent="onCancel" :disabled="cancelling">取消</button>
-        <button class="btn btn-secondary ms-2" type="button" @click="goBack" :disabled="navigating">返回</button>
+        <div class="d-flex align-items-center">
+          <!-- 左邊按鈕群 -->
+          <div>
+            <button class="btn btn-primary ms-2" type="submit" @click.prevent="onSave" :disabled="saving">
+              儲存
+            </button>
+
+            <button class="btn btn-secondary ms-2" type="button" @click="goBack" :disabled="navigating">
+              返回
+            </button>
+          </div>
+
+          <!-- 右邊取消訂單 -->
+          <div class="ms-auto">
+            <button class="btn bg-danger ms-2" type="submit" @click.prevent="onCancel" :disabled="cancelling">
+              取消訂單
+            </button>
+          </div>
+        </div>
       </form>
     </div>
   </div>
