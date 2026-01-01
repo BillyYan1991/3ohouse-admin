@@ -199,11 +199,21 @@ async function fetchData() {
         const arr = payload as unknown[]
         houses.value = (arr as unknown[]).map((it) => {
           const o = it as Record<string, unknown>
+          const rawYear = o['year']
+          const yearNum = rawYear !== undefined && rawYear !== null ? Number(rawYear) || undefined : undefined
+          const rawMonthly = Array.isArray(o['monthly']) ? (o['monthly'] as unknown[]).map(x => x as Record<string, unknown>) : []
+          // 若 monthly 項目包含 year 欄位，僅保留與目前選擇年度相符的月資料，避免不同年度合併
+          const filteredMonthly = rawMonthly.filter(m => {
+            if (m == null) return false
+            const my = m['year'] ?? m['y'] ?? undefined
+            if (my === undefined || my === null) return true
+            return Number(my) === selectedYear.value
+          })
           return {
             houseId: Number(o['houseId'] ?? 0) || 0,
             houseName: String(o['houseName'] ?? o['name'] ?? '未知'),
-            year: Number(o['year'] ?? selectedYear.value) || selectedYear.value,
-            monthly: Array.isArray(o['monthly']) ? (o['monthly'] as unknown[]).map(x => x as Record<string, unknown>) : [],
+            year: yearNum,
+            monthly: filteredMonthly,
           }
         })
         // 已將所有民宿儲存於 houses.value，前端改為顯示所有民宿（或以年度過濾）
