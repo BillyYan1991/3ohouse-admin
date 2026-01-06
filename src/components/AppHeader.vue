@@ -217,6 +217,11 @@ function toggleSidepanel() {
                       class="nav-link" active-class="active">
                       <span class="nav-link-text">花水木</span>
                     </router-link></li>
+                  <li class="submenu-item"><router-link
+                      :to="{ name: 'CalendarForm', params: { id: '369d765eb1f58e6133724be27209115a07f0ba7df6e5a0b93626067a7a025881@group.calendar.google.com' } }"
+                      class="nav-link" active-class="active">
+                      <span class="nav-link-text">避風港</span>
+                    </router-link></li>
                 </ul>
               </div>
             </li>
