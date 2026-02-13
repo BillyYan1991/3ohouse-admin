@@ -1,9 +1,9 @@
 <template>
   <div class="app-content pt-3 p-md-3 p-lg-4">
-    <h1 class="app-page-title" v-if="houseId == '1'">無憂特別價格</h1>
-    <h1 class="app-page-title" v-if="houseId == '2'">寄寓特別價格</h1>
-    <h1 class="app-page-title" v-if="houseId == '3'">上水特別價格</h1>
-    <h1 class="app-page-title" v-if="houseId == '4'">花水木特別價格</h1>
+    <h1 class="app-page-title" v-if="houseId == '1'">無憂特別區間</h1>
+    <h1 class="app-page-title" v-if="houseId == '2'">寄寓特別區間</h1>
+    <h1 class="app-page-title" v-if="houseId == '3'">上水特別區間</h1>
+    <h1 class="app-page-title" v-if="houseId == '4'">花水木特別區間</h1>
     <div v-if="loading">載入中...</div>
     <div v-else-if="error" class="text-danger">{{ error }}</div>
     <div v-else>

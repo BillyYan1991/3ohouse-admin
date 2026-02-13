@@ -10,6 +10,7 @@ import SpecialdayList from '../views/SpecialdayList.vue'
 import FinancialForm from '@/views/FinancialForm.vue'
 import NotFoundView from '../views/NotFound.vue'
 import BookingList from '@/views/BookingList.vue'
+import RoomList from '@/views/RoomList.vue'
 import { isLoggedIn } from '@/utils/auth'
 
 const router = createRouter({
@@ -36,6 +37,11 @@ const router = createRouter({
           path: 'bookingList',
           name: 'BookingList',
           component: BookingList,
+        },
+        {
+          path: 'roomList/:id',
+          name: 'RoomList',
+          component: RoomList,
         },
         {
           path: 'calendarForm/:id',

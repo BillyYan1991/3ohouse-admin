@@ -1,12 +1,12 @@
 <template>
   <div class="app-content pt-3 p-md-3 p-lg-4">
-    <h1 class="app-page-title" v-if="houseId == '1'">無憂特別價格</h1>
-    <h1 class="app-page-title" v-if="houseId == '2'">寄寓特別價格</h1>
-    <h1 class="app-page-title" v-if="houseId == '3'">上水特別價格</h1>
-    <h1 class="app-page-title" v-if="houseId == '4'">花水木特別價格</h1>
+    <h1 class="app-page-title" v-if="houseId == '1'">無憂特別區間</h1>
+    <h1 class="app-page-title" v-if="houseId == '2'">寄寓特別區間</h1>
+    <h1 class="app-page-title" v-if="houseId == '3'">上水特別區間</h1>
+    <h1 class="app-page-title" v-if="houseId == '4'">花水木特別區間</h1>
     <div class="mb-3">
       <button class="btn app-btn-primary" @click="goNew" :aria-disabled="navigatingNew"
-        :class="{ disabled: navigatingNew }">新增特別價格</button>
+        :class="{ disabled: navigatingNew }">新增特別區間</button>
     </div>
     <div class="tab-pane fade active show" id="orders-all" role="tabpanel" aria-labelledby="orders-all-tab">
       <div class="app-card app-card-orders-table shadow-sm mb-5">

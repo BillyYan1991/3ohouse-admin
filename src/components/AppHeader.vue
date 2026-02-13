@@ -183,9 +183,9 @@ function toggleSidepanel() {
             <li class="nav-item has-submenu">
               <!--//Bootstrap Icons: https://icons.getbootstrap.com/ -->
               <a class="nav-link submenu-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#submenu-1"
-                aria-expanded="true" aria-controls="submenu-1">
+                aria-expanded="false" aria-controls="submenu-1">
 
-                <span class="nav-link-text" style="font-size: 25px;"><strong>日曆</strong></span>
+                <span class="nav-link-text" style="font-size: 25px;"><strong>谷歌日曆</strong></span>
                 <span class="submenu-arrow">
                   <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-down" fill="currentColor"
                     xmlns="http://www.w3.org/2000/svg">
@@ -195,7 +195,7 @@ function toggleSidepanel() {
                   </svg>
                 </span><!--//submenu-arrow-->
               </a><!--//nav-link-->
-              <div id="submenu-1" class="submenu submenu-1 collapse show" data-bs-parent="#menu-accordion" style="">
+              <div id="submenu-1" class="submenu submenu-1 collapse" data-bs-parent="#menu-accordion" style="">
                 <ul class="submenu-list list-unstyled">
                   <li class="submenu-item"> <router-link
                       :to="{ name: 'CalendarForm', params: { id: '93a5bc7d0accd55a881ef99837103887c43d3495beac42f15291f56e21064890@group.calendar.google.com' } }"
@@ -227,8 +227,8 @@ function toggleSidepanel() {
             </li>
             <li class="nav-item has-submenu">
               <a class="nav-link submenu-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#submenu-2"
-                aria-expanded="true" aria-controls="submenu-2">
-                <span class="nav-link-text" style="font-size: 25px;"><strong>特別價格</strong></span>
+                aria-expanded="false" aria-controls="submenu-2">
+                <span class="nav-link-text" style="font-size: 25px;"><strong>房型設定</strong></span>
                 <span class="submenu-arrow">
                   <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-down" fill="currentColor"
                     xmlns="http://www.w3.org/2000/svg">
@@ -238,7 +238,45 @@ function toggleSidepanel() {
                   </svg>
                 </span><!--//submenu-arrow-->
               </a><!--//nav-link-->
-              <div id="submenu-2" class="submenu submenu-2 collapse show" data-bs-parent="#menu-accordion" style="">
+              <div id="submenu-2" class="submenu submenu-2 collapse" data-bs-parent="#menu-accordion" style="">
+                <ul class="submenu-list list-unstyled">
+                  <li class="submenu-item"><router-link :to="{ name: 'RoomList', params: { id: '1', name: '無憂' } }"
+                      class="nav-link" active-class="active">
+                      <span class="nav-link-text">無憂</span>
+                    </router-link></li>
+                  <li class="submenu-item"><router-link :to="{ name: 'RoomList', params: { id: '2', name: '寄寓' } }"
+                      class="nav-link" active-class="active">
+                      <span class="nav-link-text">寄寓</span>
+                    </router-link></li>
+                  <li class="submenu-item"><router-link :to="{ name: 'RoomList', params: { id: '3', name: '上水' } }"
+                      class="nav-link" active-class="active">
+                      <span class="nav-link-text">上水</span>
+                    </router-link></li>
+                  <li class="submenu-item"><router-link :to="{ name: 'RoomList', params: { id: '4', name: '花水木' } }"
+                      class="nav-link" active-class="active">
+                      <span class="nav-link-text">花水木</span>
+                    </router-link></li>
+                  <li class="submenu-item"><router-link :to="{ name: 'RoomList', params: { id: '5', name: '避風港' } }"
+                      class="nav-link" active-class="active">
+                      <span class="nav-link-text">避風港</span>
+                    </router-link></li>
+                </ul>
+              </div>
+            </li>
+            <li class="nav-item has-submenu">
+              <a class="nav-link submenu-toggle" href="#" data-bs-toggle="collapse" data-bs-target="#submenu-3"
+                aria-expanded="false" aria-controls="submenu-3">
+                <span class="nav-link-text" style="font-size: 25px;"><strong>特別區間設定</strong></span>
+                <span class="submenu-arrow">
+                  <svg width="1em" height="1em" viewBox="0 0 16 16" class="bi bi-chevron-down" fill="currentColor"
+                    xmlns="http://www.w3.org/2000/svg">
+                    <path fill-rule="evenodd"
+                      d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z">
+                    </path>
+                  </svg>
+                </span><!--//submenu-arrow-->
+              </a><!--//nav-link-->
+              <div id="submenu-3" class="submenu submenu-3 collapse" data-bs-parent="#menu-accordion" style="">
                 <ul class="submenu-list list-unstyled">
                   <li class="submenu-item"><router-link :to="{ name: 'SpecialDayList', params: { id: '1' } }"
                       class="nav-link" active-class="active">
