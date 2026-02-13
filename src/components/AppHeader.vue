@@ -256,6 +256,10 @@ function toggleSidepanel() {
                       class="nav-link" active-class="active">
                       <span class="nav-link-text">花水木</span>
                     </router-link></li>
+                  <li class="submenu-item"><router-link :to="{ name: 'SpecialDayList', params: { id: '5' } }"
+                      class="nav-link" active-class="active">
+                      <span class="nav-link-text">避風港</span>
+                    </router-link></li>
                 </ul>
               </div>
             </li>

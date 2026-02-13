@@ -7,5 +7,6 @@ export type roomSpecialDay = {
   endDate: Date
   price: number
   isActive: boolean
+  isMain: boolean
   memo: string | null
 }

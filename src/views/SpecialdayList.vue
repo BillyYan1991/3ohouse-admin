@@ -20,6 +20,7 @@
                   <th class="cell">調整金額</th>
                   <th class="cell">起始日期</th>
                   <th class="cell">結束日期</th>
+                  <th class="cell">單賣</th>
                   <th class="cell">啟用</th>
                   <th class="cell"></th>
                 </tr>
@@ -31,7 +32,8 @@
                   <td class="cell">{{ obj.price }}</td>
                   <td class="cell"><span class="cell-data">{{ formatDate(obj.startDate) }}</span></td>
                   <td class="cell"><span class="cell-data">{{ formatDate(obj.endDate) }}</span></td>
-                  <td class="cell">{{ obj.isActive }}</td>
+                  <td class="cell">{{ obj.isMain ? '是' : '否' }}</td>
+                  <td class="cell">{{ obj.isActive ? '是' : '否' }}</td>
                   <td class="cell"><a class="btn app-btn-primary" href="#" @click.prevent="goEdit(obj.id)"
                       :aria-disabled="navigatingMap[obj.id]" :class="{ disabled: navigatingMap[obj.id] }">編輯</a></td>
                 </tr>

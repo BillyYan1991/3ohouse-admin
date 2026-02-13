@@ -33,6 +33,18 @@
           </div>
         </div>
         <div class="mb-3">
+          <label class="form-label d-block">單賣</label>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" id="uniqueTrue" :value="true" v-model="special.isMain" />
+            <label class="form-check-label" for="uniqueTrue">是</label>
+          </div>
+          <div class="form-check form-check-inline">
+            <input class="form-check-input" type="radio" id="uniqueFalse" :value="false" v-model="special.isMain"
+              checked="true" />
+            <label class="form-check-label" for="uniqueFalse">否</label>
+          </div>
+        </div>
+        <div class="mb-3">
           <label class="form-label">備註</label>
           <textarea class="form-control" rows="3" v-model="special.memo"></textarea>
         </div>
@@ -103,6 +115,7 @@ interface specialday {
   roomName: string
   originalPrice: number
   price: number
+  isMain?: boolean
 }
 
 
@@ -204,7 +217,9 @@ export default defineComponent({
           isActive: special.value?.isActive,
           memo: special.value?.memo || null,
           roomId: special.value?.roomId,
-          price: special.value?.price
+          price: special.value?.price,
+          isMain: special.value?.isMain || false
+
         }
 
 
