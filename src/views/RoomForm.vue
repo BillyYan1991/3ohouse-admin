@@ -1,65 +1,14 @@
 <template>
   <div class="app-content pt-3 p-md-3 p-lg-4">
-    <h1 class="app-page-title">No.{{ booking.orderNo }}</h1>
+    <h1 class="app-page-title">{{ room.name }}</h1>
 
     <div v-if="loading">載入中...</div>
     <div v-else-if="error" class="text-danger">{{ error }}</div>
     <div v-else>
       <form>
         <div class="mb-3">
-          <label class="form-label">民宿</label>
-          <input class="form-control" :value="booking.house?.name" readonly />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">姓名</label>
-          <input class="form-control" :value="booking.userName" readonly />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">入住日期</label>
-          <!--sub 0~10-->
-          <input type="date" class="form-control" :value="booking.checkIn ? formatDateToInput(booking.checkIn) : ''"
-            readonly />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">退房日期</label>
-          <input type="date" class="form-control" :value="booking.checkOut ? formatDateToInput(booking.checkOut) : ''"
-            readonly />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">幾晚</label>
-          <input type="number" class="form-control" :value="booking.nights" readonly />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">總金額</label>
-          <input type="number" class="form-control" :value="booking.totalPrice" readonly />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">訂金</label>
-          <input type="number" class="form-control" :value="booking.prepayment" readonly />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">調整金額</label>
-          <input type="number" class="form-control" style="background-color:beige;" v-model="booking.adjustment" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">已付金額</label>
-          <input type="number" class="form-control" style="background-color:beige;" v-model="booking.paid" />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">電話</label>
-          <input type="number" class="form-control" :value="booking.phone" readonly />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">email</label>
-          <input type="email" class="form-control" :value="booking.email" readonly />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">末五碼</label>
-          <input type="number" class="form-control" :value="booking.paymemo" readonly />
-        </div>
-        <div class="mb-3">
-          <label class="form-label">客戶備註</label>
-          <textarea class="form-control" :value="booking.memo" rows="3" readonly></textarea>
+          <label class="form-label">價格</label>
+          <input class="form-control" :value="room.price" readonly />
         </div>
         <div class="app-card app-card-orders-table shadow-sm mb-5">
           <div class="app-card-body">
@@ -67,30 +16,30 @@
               <table class="table app-table-hover mb-0 text-left">
                 <thead>
                   <tr>
-                    <th style="background-color:azure" class=" cell">房型</th>
-                    <th style="background-color:azure" class="cell">金額</th>
-                    <th style="background-color:azure" class="cell">加床</th>
-                    <th style="background-color:azure" class="cell">加床價格</th>
-                    <th style="background-color:azure" class="cell">嬰兒床</th>
+                    <th style="background-color:azure" class="cell">星期日</th>
+                    <th style="background-color:azure" class="cell">星期一</th>
+                    <th style="background-color:azure" class="cell">星期二</th>
+                    <th style="background-color:azure" class="cell">星期三</th>
+                    <th style="background-color:azure" class="cell">星期四</th>
+                    <th style="background-color:azure" class="cell">星期五</th>
+                    <th style="background-color:azure" class="cell">星期六</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr v-for="detail in booking.details" :key="detail.id">
-                    <td class="cell">{{ detail.room.name }}</td>
-                    <td class="cell">{{ detail.price }}</td>
-                    <td class="cell">{{ detail.extraBedQty }}</td>
-                    <td class="cell">{{ detail.extraBedPrice }}</td>
-                    <td class="cell">{{ detail.babyBedQty }}</td>
+                  <tr>
+                    <td class="cell"><input class="form-control" :value="room.day0" /></td>
+                    <td class="cell"><input class="form-control" :value="room.day1" /></td>
+                    <td class="cell"><input class="form-control" :value="room.day2" /></td>
+                    <td class="cell"><input class="form-control" :value="room.day3" /></td>
+                    <td class="cell"><input class="form-control" :value="room.day4" /></td>
+                    <td class="cell"><input class="form-control" :value="room.day5" /></td>
+                    <td class="cell"><input class="form-control" :value="room.day6" /></td>
                   </tr>
 
                 </tbody>
               </table>
             </div><!--//table-responsive-->
           </div><!--//app-card-body-->
-        </div>
-        <div class="mb-3">
-          <label class="form-label">管理員備註</label>
-          <textarea class="form-control" v-model="booking.admin_memo" rows="3"></textarea>
         </div>
         <div class="d-flex align-items-center">
           <!-- 左邊按鈕群 -->
@@ -103,13 +52,6 @@
               返回
             </button>
           </div>
-
-          <!-- 右邊取消訂單 -->
-          <div class="ms-auto">
-            <button class="btn bg-danger ms-2" type="submit" @click.prevent="onCancel" :disabled="cancelling">
-              取消訂單
-            </button>
-          </div>
         </div>
       </form>
     </div>
@@ -120,7 +62,7 @@
 import { defineComponent, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
-import type { Booking } from '@/types/booking'
+import type { Room } from '@/types/room'
 
 const apiUrl = import.meta.env.VITE_API_URL
 // input[type=date] 專用
@@ -137,7 +79,7 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString('zh-TW', options)
 }
 export default defineComponent({
-  name: 'BookingForm',
+  name: 'RoomForm',
   setup() {
     const route = useRoute()
     const router = useRouter()
@@ -145,7 +87,7 @@ export default defineComponent({
 
     const loading = ref(false)
     const error = ref<string | null>(null)
-    const booking = ref<Partial<Booking>>({})
+    const room = ref<Partial<Room>>({})
 
     // 防連點 flags
     const saving = ref(false)
@@ -167,13 +109,12 @@ export default defineComponent({
 
 
 
-    const fetchBooking = async (bookingId: string) => {
+    const fetchRoom = async (roomId: string) => {
       loading.value = true
       error.value = null
       try {
-        const res = await axios.get<Booking>(`${apiUrl}/booking/form?id=${bookingId}`)
-        booking.value = res.data
-        console.log('載入的 booking 資料', booking.value)
+        const res = await axios.get<Room>(`${apiUrl}/room/form?id=${roomId}`)
+        room.value = res.data
       } catch (err: unknown) {
         error.value = getErrorMessage(err)
       } finally {
@@ -182,8 +123,8 @@ export default defineComponent({
     }
 
     if (id) {
-      // 如果有 id，載入該 booking
-      fetchBooking(id)
+      // 如果有 id，載入該房型
+      fetchRoom(id)
     }
 
     const onSave = async () => {
@@ -193,11 +134,14 @@ export default defineComponent({
       try {
         if (id) {
           const payload = {
-            id: booking.value?.id,
-            adjustment: booking.value?.adjustment ?? 0,
-            paid: booking.value?.paid ?? 0,
-            admin_memo: booking.value?.admin_memo ?? null,
-            status: 2
+            id: room.value?.id,
+            day0: room.value?.day0,
+            day1: room.value?.day1,
+            day2: room.value?.day2,
+            day3: room.value?.day3,
+            day4: room.value?.day4,
+            day5: room.value?.day5,
+            day6: room.value?.day6,
           }
           await axios.put(`${apiUrl}/booking/form?id=${id}`, payload)
           const fgparam = route.query.fg as string | undefined
@@ -219,37 +163,6 @@ export default defineComponent({
       }
     }
 
-    const onCancel = async () => {
-      if (cancelling.value) return
-      cancelling.value = true
-      // 範例：如果有 id，put 更新，否則 post 建立
-      try {
-        if (id) {
-          const payload = {
-            id: booking.value?.id,
-            adjustment: booking.value?.adjustment ?? 0,
-            paid: booking.value?.paid ?? 0,
-            admin_memo: booking.value?.admin_memo ?? null,
-            status: -1
-          }
-          await axios.put(`${apiUrl}/booking/form?id=${id}`, payload)
-        } else {
-          //尚未實作後台新增
-          // await axios.post(`${apiUrl}/booking/form`, booking.value)
-        }
-        const fgparam = route.query.fg as string | undefined
-        if (fgparam === '1') {
-          router.replace('/index')
-        } else {
-          router.back()
-        }
-      } catch (err: unknown) {
-        error.value = getErrorMessage(err) || '儲存失敗'
-      }
-      finally {
-        cancelling.value = false
-      }
-    }
 
     const goBack = () => {
       if (navigating.value) return
@@ -258,7 +171,7 @@ export default defineComponent({
       // navigating flag will be irrelevant after navigation
     }
 
-    return { loading, error, booking, onSave, goBack, onCancel, formatDate, formatDateToInput, saving, cancelling, navigating }
+    return { loading, error, room, onSave, goBack, formatDate, formatDateToInput, saving, cancelling, navigating }
   }
 })
 </script>
