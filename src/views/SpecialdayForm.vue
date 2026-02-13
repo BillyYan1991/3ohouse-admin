@@ -33,15 +33,15 @@
           </div>
         </div>
         <div class="mb-3">
-          <label class="form-label d-block">單賣</label>
+          <label class="form-label d-block">關房</label>
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" id="uniqueTrue" :value="true" v-model="special.isMain" />
-            <label class="form-check-label" for="uniqueTrue">是</label>
+            <input class="form-check-input" type="radio" id="closedTrue" :value="true" v-model="special.isClosed" />
+            <label class="form-check-label" for="closedTrue">是</label>
           </div>
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" id="uniqueFalse" :value="false" v-model="special.isMain"
+            <input class="form-check-input" type="radio" id="closedFalse" :value="false" v-model="special.isClosed"
               checked="true" />
-            <label class="form-check-label" for="uniqueFalse">否</label>
+            <label class="form-check-label" for="closedFalse">否</label>
           </div>
         </div>
         <div class="mb-3">
@@ -115,7 +115,7 @@ interface specialday {
   roomName: string
   originalPrice: number
   price: number
-  isMain?: boolean
+  isClosed?: boolean
 }
 
 
@@ -218,7 +218,7 @@ export default defineComponent({
           memo: special.value?.memo || null,
           roomId: special.value?.roomId,
           price: special.value?.price,
-          isMain: special.value?.isMain || false
+          isClosed: special.value?.isClosed || false
 
         }
 

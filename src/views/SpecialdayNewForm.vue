@@ -47,6 +47,8 @@
                   <tr>
                     <th style="background-color:azure" class=" cell">房型</th>
                     <th style="background-color:azure" class="cell">變額</th>
+                    <th style="background-color:azure" class="cell">關房</th>
+                    <th style="background-color:azure" class="cell"></th>
                   </tr>
                 </thead>
                 <tbody>
@@ -55,6 +57,12 @@
                     <td class="cell">
                       <input type="hidden" class="form-control" v-model.number="list[idx].id" />
                       <input type="number" class="form-control" v-model.number="list[idx].price" />
+                    </td>
+                    <td class="cell">
+                      <input type="checkbox" class="form-check-input" v-model.number="list[idx].isClosed" />
+                    </td>
+                    <td class="cell">
+                      <button class="btn btn-danger" @click.prevent="removeRow(idx)">刪除</button>
                     </td>
                   </tr>
                 </tbody>
@@ -93,6 +101,7 @@ interface RoomRow {
   houseId: number
   name: string
   price: number
+  isClosed: boolean
 }
 const special = ref({
   name: '',
@@ -175,7 +184,8 @@ export default defineComponent({
           endDate: new Date(special.value.endDate),
           isActive: special.value.isActiveString === 'true',
           memo: special.value.memo || null,
-          price: item.price
+          price: item.price,
+          isClosed: item.isClosed
         }))
 
 
@@ -205,8 +215,11 @@ export default defineComponent({
 
 
     const goBack = () => router.back()
+    const removeRow = (idx: number) => {
+      list.value.splice(idx, 1)
+    }
 
-    return { loading, error, list, special, onSave, goBack, formatDate, formatDateToInput, houseId, minDate }
+    return { loading, error, list, special, onSave, goBack, removeRow, formatDate, formatDateToInput, houseId, minDate }
   }
 })
 
