@@ -59,6 +59,10 @@
             </div>
           </div>
         </div>
+        <div class="mb-3">
+          <label class="form-label">最後更新人員</label>
+          <input class="form-control" :value="room.lastUpdateUser" readonly />
+        </div>
         <div class="app-card app-card-orders-table shadow-sm mb-5">
           <div class="app-card-body">
             <div class="table-responsive">
@@ -89,6 +93,7 @@
             </div><!--//table-responsive-->
           </div><!--//app-card-body-->
         </div>
+
         <div class="d-flex align-items-center">
           <!-- 左邊按鈕群 -->
           <div>
@@ -107,10 +112,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
+import { defineComponent, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import type { Room } from '@/types/room'
+import { getToken, parseJwt } from '@/utils/auth'
 
 const apiUrl = import.meta.env.VITE_API_URL
 // input[type=date] 專用
@@ -156,6 +162,34 @@ export default defineComponent({
       }
     }
 
+    const readStoredUser = (): string | null => {
+      try {
+        const raw = localStorage.getItem('auth_user')
+        if (!raw) return null
+        // 如果是序列化的物件，回傳特定欄位，否則回傳字串
+        try {
+          const parsed = JSON.parse(raw)
+          if (!parsed) return null
+          return (parsed.name as string) || (parsed.email as string) || (parsed.user as string) || JSON.stringify(parsed)
+        } catch {
+          return raw
+        }
+      } catch {
+        return null
+      }
+    }
+
+    const displayUser = computed(() => {
+      const stored = readStoredUser()
+      if (stored) return stored
+      const t = getToken()
+      if (!t) return ''
+      const payload = parseJwt(t)
+      if (!payload) return ''
+      const name = (payload as Record<string, any>)['name'] || (payload as Record<string, any>)['email'] || (payload as Record<string, any>)['sub'] || (payload as Record<string, any>)['user']
+      return name ? String(name) : ''
+    })
+
 
 
     const fetchRoom = async (roomId: string) => {
@@ -194,6 +228,7 @@ export default defineComponent({
       // 範例：如果有 id，put 更新，否則 post 建立
       try {
         if (id) {
+
           const payload = {
             id: room.value?.id,
             price: room.value?.price,
@@ -211,6 +246,7 @@ export default defineComponent({
             day4: room.value?.day4,
             day5: room.value?.day5,
             day6: room.value?.day6,
+            lastUpdateUser: displayUser.value || '',
           }
           await axios.put(`${apiUrl}/room/form?id=${id}`, payload)
           const fgparam = route.query.fg as string | undefined
@@ -240,7 +276,7 @@ export default defineComponent({
       // navigating flag will be irrelevant after navigation
     }
 
-    return { loading, error, room, houseName, onSave, goBack, formatDate, formatDateToInput, saving, cancelling, navigating }
+    return { loading, error, room, houseName, onSave, goBack, formatDate, formatDateToInput, saving, cancelling, navigating, displayUser }
   }
 })
 </script>

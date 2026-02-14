@@ -21,4 +21,5 @@ export interface Room {
   day6: number
   color: string
   pqty: number
+  lastUpdateUser: string
 }

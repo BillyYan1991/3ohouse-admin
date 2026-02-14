@@ -20,6 +20,7 @@ export interface Booking {
   createdAt: string
   house: House
   details: BookingDetail[]
+  lastUpdateUser: string
 }
 
 export interface House {

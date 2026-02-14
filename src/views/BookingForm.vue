@@ -17,13 +17,11 @@
         <div class="mb-3">
           <label class="form-label">入住日期</label>
           <!--sub 0~10-->
-          <input type="date" class="form-control" :value="booking.checkIn ? formatDateToInput(booking.checkIn) : ''"
-            readonly />
+          <input type="date" class="form-control" style="background-color:beige;" v-model="booking.checkIn" />
         </div>
         <div class="mb-3">
           <label class="form-label">退房日期</label>
-          <input type="date" class="form-control" :value="booking.checkOut ? formatDateToInput(booking.checkOut) : ''"
-            readonly />
+          <input type="date" class="form-control" style="background-color:beige;" v-model="booking.checkOut" />
         </div>
         <div class="mb-3">
           <label class="form-label">幾晚</label>
@@ -103,13 +101,19 @@
           <label class="form-label">管理員備註</label>
           <textarea class="form-control" v-model="booking.admin_memo" rows="3"></textarea>
         </div>
+        <div class="mb-3">
+          <label class="form-label">最後更新人員</label>
+          <input class="form-control" :value="booking.lastUpdateUser" readonly />
+        </div>
         <div class="d-flex align-items-center">
           <!-- 左邊按鈕群 -->
           <div>
-            <button class="btn btn-primary ms-2" type="submit" @click.prevent="onSave" :disabled="saving">
+            <button class="btn btn-primary ms-2" type="submit" @click.prevent="onSave(false)" :disabled="saving">
               儲存
             </button>
-
+            <button class="btn btn-primary ms-2" type="submit" @click.prevent="onSave(true)" :disabled="saving">
+              儲存並發送信件
+            </button>
             <button class="btn btn-secondary ms-2" type="button" @click="goBack" :disabled="navigating">
               返回
             </button>
@@ -128,10 +132,11 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, ref } from 'vue'
+import { defineComponent, ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
 import type { Booking } from '@/types/booking'
+import { getToken, parseJwt } from '@/utils/auth'
 
 const apiUrl = import.meta.env.VITE_API_URL
 // input[type=date] 專用
@@ -157,6 +162,8 @@ export default defineComponent({
     const loading = ref(false)
     const error = ref<string | null>(null)
     const booking = ref<Partial<Booking>>({})
+    const originalCheckIn = ref<string | null>(null)
+    const originalCheckOut = ref<string | null>(null)
 
     // 防連點 flags
     const saving = ref(false)
@@ -176,6 +183,33 @@ export default defineComponent({
       }
     }
 
+    const readStoredUser = (): string | null => {
+      try {
+        const raw = localStorage.getItem('auth_user')
+        if (!raw) return null
+        try {
+          const parsed = JSON.parse(raw)
+          if (!parsed) return null
+          return (parsed.name as string) || (parsed.email as string) || (parsed.user as string) || JSON.stringify(parsed)
+        } catch {
+          return raw
+        }
+      } catch {
+        return null
+      }
+    }
+
+    const displayUser = computed(() => {
+      const stored = readStoredUser()
+      if (stored) return stored
+      const t = getToken()
+      if (!t) return ''
+      const payload = parseJwt(t)
+      if (!payload) return ''
+      const name = (payload as Record<string, any>)['name'] || (payload as Record<string, any>)['email'] || (payload as Record<string, any>)['sub'] || (payload as Record<string, any>)['user']
+      return name ? String(name) : ''
+    })
+
 
 
     const fetchBooking = async (bookingId: string) => {
@@ -184,7 +218,16 @@ export default defineComponent({
       try {
         const res = await axios.get<Booking>(`${apiUrl}/booking/form?id=${bookingId}`)
         booking.value = res.data
+        // 正規化後端回傳的日期（可能含 time）為 YYYY-MM-DD，讓 input[type=date] 的 v-model 能正確顯示
+        try {
+          if (booking.value?.checkIn) booking.value.checkIn = formatDateToInput(String(booking.value.checkIn))
+          if (booking.value?.checkOut) booking.value.checkOut = formatDateToInput(String(booking.value.checkOut))
+        } catch {
+          // ignore
+        }
         console.log('載入的 booking 資料', booking.value)
+        originalCheckIn.value = booking.value?.checkIn ? String(booking.value.checkIn) : null
+        originalCheckOut.value = booking.value?.checkOut ? String(booking.value.checkOut) : null
       } catch (err: unknown) {
         error.value = getErrorMessage(err)
       } finally {
@@ -197,17 +240,44 @@ export default defineComponent({
       fetchBooking(id)
     }
 
-    const onSave = async () => {
+    const onSave = async (sendEmail: boolean = false) => {
       if (saving.value) return
       saving.value = true
       // 範例：如果有 id，put 更新，否則 post 建立
       try {
+        // 如果 checkIn/checkOut 有變動，先檢查是否與已存在訂單衝突
+        const checkInStr = booking.value?.checkIn ? formatDateToInput(booking.value.checkIn as string) : ''
+        const checkOutStr = booking.value?.checkOut ? formatDateToInput(booking.value.checkOut as string) : ''
+        // 轉為 ISO 格式送給後端（避免格式不一致）
+        const isoCheckIn = checkInStr ? new Date(checkInStr).toISOString() : null
+        const isoCheckOut = checkOutStr ? new Date(checkOutStr).toISOString() : null
+        const datesChanged = checkInStr !== (originalCheckIn.value || '') || checkOutStr !== (originalCheckOut.value || '')
+        if (datesChanged) {
+          for (const d of (booking.value?.details ?? [])) {
+            const roomId = d.room?.id
+            if (!roomId) continue
+            const response = await axios.get(`${apiUrl}/booking/bookedByOrder`, {
+              params: {
+                id: booking.value?.id,
+                roomId: roomId,
+                checkIn: checkInStr,
+                checkOut: checkOutStr,
+              },
+            })
+            if (response.data && Array.isArray(response.data) && response.data.length > 0) {
+              window.alert(`房型 ${d.room?.name || roomId} 在 ${checkInStr} - ${checkOutStr} 已有重複訂房區間，請確認。`)
+              saving.value = false
+              return
+            }
+          }
+        }
         if (id) {
           const detailsPayload = (booking.value?.details ?? []).map(d => ({
             id: d.id,
             extraBedQty: d.extraBedQty ?? 0,
             extraBedPrice: d.extraBedPrice ?? 0,
             babyBedQty: d.babyBedQty ?? 0,
+            ...(datesChanged ? { checkIn: isoCheckIn, checkOut: isoCheckOut } : {}),
           }))
           const payload = {
             id: booking.value?.id,
@@ -216,9 +286,11 @@ export default defineComponent({
             admin_memo: booking.value?.admin_memo ?? null,
             totalPrice: booking.value?.totalPrice ?? 0,
             details: detailsPayload,
-            status: 2
+            status: 2,
+            lastUpdateUser: displayUser.value || 'admin',
+            ...(datesChanged ? { checkIn: isoCheckIn, checkOut: isoCheckOut } : {}),
           }
-          await axios.put(`${apiUrl}/booking/form?id=${id}`, payload)
+          await axios.put(`${apiUrl}/booking/form?id=${id}&sendMail=${sendEmail}`, payload)
           const fgparam = route.query.fg as string | undefined
           if (fgparam === '1') {
             router.replace('/index')
@@ -231,7 +303,19 @@ export default defineComponent({
         }
 
       } catch (err: unknown) {
-        error.value = getErrorMessage(err) || '儲存失敗'
+        console.error('onSave error', err)
+        try {
+          if (axios.isAxiosError(err)) {
+            const status = err.response?.status
+            const data = err.response?.data
+            error.value = getErrorMessage(err) || `儲存失敗 (${status})`
+            window.alert(`伺服器錯誤: ${status}\n${JSON.stringify(data)}`)
+          } else {
+            error.value = getErrorMessage(err) || '儲存失敗'
+          }
+        } catch {
+          error.value = '儲存失敗'
+        }
       }
       finally {
         saving.value = false
@@ -240,6 +324,8 @@ export default defineComponent({
 
     const onCancel = async () => {
       if (cancelling.value) return
+      const ok = window.confirm('are you sure?really?真假?')
+      if (!ok) return
       cancelling.value = true
       // 範例：如果有 id，put 更新，否則 post 建立
       try {
@@ -257,7 +343,8 @@ export default defineComponent({
             admin_memo: booking.value?.admin_memo ?? null,
             totalPrice: booking.value?.totalPrice ?? 0,
             details: detailsPayload,
-            status: -1
+            status: -1,
+            lastUpdateUser: displayUser.value || 'admin',
           }
           await axios.put(`${apiUrl}/booking/form?id=${id}`, payload)
         } else {
@@ -302,7 +389,7 @@ export default defineComponent({
       // navigating flag will be irrelevant after navigation
     }
 
-    return { loading, error, booking, onSave, goBack, onCancel, formatDate, formatDateToInput, saving, cancelling, navigating, onExtraBedQtyChange }
+    return { loading, error, booking, onSave, goBack, onCancel, formatDate, formatDateToInput, saving, cancelling, navigating, onExtraBedQtyChange, displayUser, originalCheckIn, originalCheckOut }
   }
 })
 </script>
