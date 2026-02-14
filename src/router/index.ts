@@ -40,7 +40,7 @@ const router = createRouter({
           component: BookingList,
         },
         {
-          path: 'roomList/:id',
+          path: 'roomList/:id?',
           name: 'RoomList',
           component: RoomList,
         },

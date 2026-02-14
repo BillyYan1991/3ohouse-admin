@@ -78,9 +78,20 @@
                   <tr v-for="detail in booking.details" :key="detail.id">
                     <td class="cell">{{ detail.room.name }}</td>
                     <td class="cell">{{ detail.price }}</td>
-                    <td class="cell">{{ detail.extraBedQty }}</td>
+                    <td class="cell">
+                      <select class="form-select" v-model.number="detail.extraBedQty"
+                        @change="onExtraBedQtyChange(detail)">
+                        <option v-for="n in (detail.room?.extraBedQty ?? 0) + 1" :key="n - 1" :value="n - 1">{{ n - 1 }}
+                        </option>
+                      </select>
+                    </td>
                     <td class="cell">{{ detail.extraBedPrice }}</td>
-                    <td class="cell">{{ detail.babyBedQty }}</td>
+                    <td class="cell">
+                      <select class="form-select" v-model.number="detail.babyBedQty">
+                        <option :value="0">0</option>
+                        <option :value="1">1</option>
+                      </select>
+                    </td>
                   </tr>
 
                 </tbody>
@@ -192,11 +203,19 @@ export default defineComponent({
       // 範例：如果有 id，put 更新，否則 post 建立
       try {
         if (id) {
+          const detailsPayload = (booking.value?.details ?? []).map(d => ({
+            id: d.id,
+            extraBedQty: d.extraBedQty ?? 0,
+            extraBedPrice: d.extraBedPrice ?? 0,
+            babyBedQty: d.babyBedQty ?? 0,
+          }))
           const payload = {
             id: booking.value?.id,
             adjustment: booking.value?.adjustment ?? 0,
             paid: booking.value?.paid ?? 0,
             admin_memo: booking.value?.admin_memo ?? null,
+            totalPrice: booking.value?.totalPrice ?? 0,
+            details: detailsPayload,
             status: 2
           }
           await axios.put(`${apiUrl}/booking/form?id=${id}`, payload)
@@ -225,11 +244,19 @@ export default defineComponent({
       // 範例：如果有 id，put 更新，否則 post 建立
       try {
         if (id) {
+          const detailsPayload = (booking.value?.details ?? []).map(d => ({
+            id: d.id,
+            extraBedQty: d.extraBedQty ?? 0,
+            extraBedPrice: d.extraBedPrice ?? 0,
+            babyBedQty: d.babyBedQty ?? 0,
+          }))
           const payload = {
             id: booking.value?.id,
             adjustment: booking.value?.adjustment ?? 0,
             paid: booking.value?.paid ?? 0,
             admin_memo: booking.value?.admin_memo ?? null,
+            totalPrice: booking.value?.totalPrice ?? 0,
+            details: detailsPayload,
             status: -1
           }
           await axios.put(`${apiUrl}/booking/form?id=${id}`, payload)
@@ -251,6 +278,23 @@ export default defineComponent({
       }
     }
 
+    const onExtraBedQtyChange = (detail: Booking['details'][number]) => {
+      if (!booking.value) return
+      try {
+        const oldExtraPrice = Number(detail.extraBedPrice ?? 0)
+        const unitPrice = Number(detail.room?.extraBedPrice ?? 0)
+        const qty = Number(detail.extraBedQty ?? 0)
+        const newExtraPrice = unitPrice * qty
+        // update detail extra price
+        detail.extraBedPrice = newExtraPrice
+        // adjust booking total price: -old + new
+        const currentTotal = Number(booking.value.totalPrice ?? 0)
+        booking.value.totalPrice = currentTotal - oldExtraPrice + newExtraPrice
+      } catch {
+        // ignore
+      }
+    }
+
     const goBack = () => {
       if (navigating.value) return
       navigating.value = true
@@ -258,7 +302,7 @@ export default defineComponent({
       // navigating flag will be irrelevant after navigation
     }
 
-    return { loading, error, booking, onSave, goBack, onCancel, formatDate, formatDateToInput, saving, cancelling, navigating }
+    return { loading, error, booking, onSave, goBack, onCancel, formatDate, formatDateToInput, saving, cancelling, navigating, onExtraBedQtyChange }
   }
 })
 </script>

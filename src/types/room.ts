@@ -19,4 +19,6 @@ export interface Room {
   day4: number
   day5: number
   day6: number
+  color: string
+  pqty: number
 }

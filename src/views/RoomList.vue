@@ -1,6 +1,6 @@
 <template>
   <div class="app-content pt-3 p-md-3 p-lg-4">
-    <h1 class="app-page-title">{{ name }}</h1>
+    <h1 class="app-page-title">{{ houseName }} - 房型列表</h1>
     <div class="tab-pane fade active show" id="orders-all" role="tabpanel" aria-labelledby="orders-all-tab">
       <div class="app-card app-card-orders-table shadow-sm mb-5">
         <div class="app-card-body">
@@ -30,8 +30,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref, computed } from 'vue'
-import { watch } from 'vue'
+import { defineComponent, onMounted, ref, computed, watch } from 'vue'
 import type { Room } from '@/types/room'
 import { useRoute } from 'vue-router'
 
@@ -51,7 +50,20 @@ export default defineComponent({
     const rooms = ref<Room[]>([])
     const route = useRoute()
     const houseId = computed(() => String(route.params.id ?? ''))
-    const name = computed(() => route.params.name ?? '')
+    const houseName = computed(() => {
+      if (houseId.value === '1') {
+        return '無憂'
+      } else if (houseId.value === '2') {
+        return '寄寓'
+      } else if (houseId.value === '3') {
+        return '上水'
+      } else if (houseId.value === '4') {
+        return '花水木'
+      } else if (houseId.value === '5') {
+        return '避風港'
+      }
+      return ''
+    })
     const fetchRooms = async () => {
       try {
         const res = await axios.get<Room[]>(`${apiUrl}/booking/rooms?houseId=${houseId.value}`)
@@ -67,7 +79,7 @@ export default defineComponent({
       fetchRooms()
     })
 
-    return { rooms, formatDate, name }
+    return { rooms, formatDate, houseName }
   }
 })
 </script>

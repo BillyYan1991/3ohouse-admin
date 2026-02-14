@@ -240,24 +240,24 @@ function toggleSidepanel() {
               </a><!--//nav-link-->
               <div id="submenu-2" class="submenu submenu-2 collapse" data-bs-parent="#menu-accordion" style="">
                 <ul class="submenu-list list-unstyled">
-                  <li class="submenu-item"><router-link :to="{ name: 'RoomList', params: { id: '1', name: '無憂' } }"
-                      class="nav-link" active-class="active">
+                  <li class="submenu-item"><router-link :to="{ name: 'RoomList', params: { id: '1' } }" class="nav-link"
+                      active-class="active">
                       <span class="nav-link-text">無憂</span>
                     </router-link></li>
-                  <li class="submenu-item"><router-link :to="{ name: 'RoomList', params: { id: '2', name: '寄寓' } }"
-                      class="nav-link" active-class="active">
+                  <li class="submenu-item"><router-link :to="{ name: 'RoomList', params: { id: '2' } }" class="nav-link"
+                      active-class="active">
                       <span class="nav-link-text">寄寓</span>
                     </router-link></li>
-                  <li class="submenu-item"><router-link :to="{ name: 'RoomList', params: { id: '3', name: '上水' } }"
-                      class="nav-link" active-class="active">
+                  <li class="submenu-item"><router-link :to="{ name: 'RoomList', params: { id: '3' } }" class="nav-link"
+                      active-class="active">
                       <span class="nav-link-text">上水</span>
                     </router-link></li>
-                  <li class="submenu-item"><router-link :to="{ name: 'RoomList', params: { id: '4', name: '花水木' } }"
-                      class="nav-link" active-class="active">
+                  <li class="submenu-item"><router-link :to="{ name: 'RoomList', params: { id: '4' } }" class="nav-link"
+                      active-class="active">
                       <span class="nav-link-text">花水木</span>
                     </router-link></li>
-                  <li class="submenu-item"><router-link :to="{ name: 'RoomList', params: { id: '5', name: '避風港' } }"
-                      class="nav-link" active-class="active">
+                  <li class="submenu-item"><router-link :to="{ name: 'RoomList', params: { id: '5' } }" class="nav-link"
+                      active-class="active">
                       <span class="nav-link-text">避風港</span>
                     </router-link></li>
                 </ul>

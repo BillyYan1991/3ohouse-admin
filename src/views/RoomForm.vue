@@ -1,14 +1,63 @@
 <template>
   <div class="app-content pt-3 p-md-3 p-lg-4">
-    <h1 class="app-page-title">{{ room.name }}</h1>
+    <h1 class="app-page-title">{{ houseName }}</h1>
 
     <div v-if="loading">載入中...</div>
     <div v-else-if="error" class="text-danger">{{ error }}</div>
     <div v-else>
       <form>
         <div class="mb-3">
+          <label class="form-label">名稱</label>
+          <input class="form-control" v-model="room.name" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">包棟</label>
+          <input class="form-control-plaintext" :value="room.main ? '是' : '否'" readonly />
+        </div>
+        <div class="mb-3">
           <label class="form-label">價格</label>
-          <input class="form-control" :value="room.price" readonly />
+          <input class="form-control" v-model.number="room.price" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">加床價格</label>
+          <input class="form-control" type="number" v-model.number="room.extraBedPrice" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">加床</label>
+          <select class="form-select" v-model.number="room.extraBedQty">
+            <option :value="0">0</option>
+            <option :value="1">1</option>
+            <option :value="2">2</option>
+            <option :value="3">3</option>
+            <option :value="4">4</option>
+            <option :value="5">5</option>
+            <option :value="6">6</option>
+            <option :value="7">7</option>
+            <option :value="8">8</option>
+            <option :value="9">9</option>
+          </select>
+        </div>
+        <div class="mb-3">
+          <label class="form-label">描述1</label>
+          <input class="form-control" v-model="room.description" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">描述2</label>
+          <input class="form-control" v-model="room.description2" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">床與衛浴描述</label>
+          <input class="form-control" v-model="room.beds" />
+        </div>
+        <div class="mb-3">
+          <label class="form-label">谷歌通知描述</label>
+          <div class="d-flex align-items-center gap-2">
+            <input class="form-control" :value="room.color" />
+            <div class="d-flex align-items-center">
+              <input class="form-control w-auto" style="width:5rem" v-model.number="room.pqty" />
+              <span class="ms-1">人</span>
+            </div>
+          </div>
         </div>
         <div class="app-card app-card-orders-table shadow-sm mb-5">
           <div class="app-card-body">
@@ -27,15 +76,14 @@
                 </thead>
                 <tbody>
                   <tr>
-                    <td class="cell"><input class="form-control" :value="room.day0" /></td>
-                    <td class="cell"><input class="form-control" :value="room.day1" /></td>
-                    <td class="cell"><input class="form-control" :value="room.day2" /></td>
-                    <td class="cell"><input class="form-control" :value="room.day3" /></td>
-                    <td class="cell"><input class="form-control" :value="room.day4" /></td>
-                    <td class="cell"><input class="form-control" :value="room.day5" /></td>
-                    <td class="cell"><input class="form-control" :value="room.day6" /></td>
+                    <td class="cell"><input class="form-control" v-model.number="room.day0" /></td>
+                    <td class="cell"><input class="form-control" v-model.number="room.day1" /></td>
+                    <td class="cell"><input class="form-control" v-model.number="room.day2" /></td>
+                    <td class="cell"><input class="form-control" v-model.number="room.day3" /></td>
+                    <td class="cell"><input class="form-control" v-model.number="room.day4" /></td>
+                    <td class="cell"><input class="form-control" v-model.number="room.day5" /></td>
+                    <td class="cell"><input class="form-control" v-model.number="room.day6" /></td>
                   </tr>
-
                 </tbody>
               </table>
             </div><!--//table-responsive-->
@@ -87,6 +135,7 @@ export default defineComponent({
 
     const loading = ref(false)
     const error = ref<string | null>(null)
+    const houseName = ref('')
     const room = ref<Partial<Room>>({})
 
     // 防連點 flags
@@ -115,6 +164,18 @@ export default defineComponent({
       try {
         const res = await axios.get<Room>(`${apiUrl}/room/form?id=${roomId}`)
         room.value = res.data
+        const houseId = room.value.houseId
+        if (houseId === 1) {
+          houseName.value = '無憂'
+        } else if (houseId === 2) {
+          houseName.value = '寄寓'
+        } else if (houseId === 3) {
+          houseName.value = '上水'
+        } else if (houseId === 4) {
+          houseName.value = '花水木'
+        } else if (houseId === 5) {
+          houseName.value = '避風港'
+        }
       } catch (err: unknown) {
         error.value = getErrorMessage(err)
       } finally {
@@ -135,6 +196,14 @@ export default defineComponent({
         if (id) {
           const payload = {
             id: room.value?.id,
+            price: room.value?.price,
+            extraBedPrice: room.value?.extraBedPrice,
+            extraBedQty: room.value?.extraBedQty,
+            description: room.value?.description,
+            description2: room.value?.description2,
+            beds: room.value?.beds,
+            color: room.value?.color,
+            pqty: room.value?.pqty,
             day0: room.value?.day0,
             day1: room.value?.day1,
             day2: room.value?.day2,
@@ -143,7 +212,7 @@ export default defineComponent({
             day5: room.value?.day5,
             day6: room.value?.day6,
           }
-          await axios.put(`${apiUrl}/booking/form?id=${id}`, payload)
+          await axios.put(`${apiUrl}/room/form?id=${id}`, payload)
           const fgparam = route.query.fg as string | undefined
           if (fgparam === '1') {
             router.replace('/index')
@@ -152,7 +221,7 @@ export default defineComponent({
           }
         } else {
           //尚未實作後台新增
-          // await axios.post(`${apiUrl}/booking/form`, booking.value)
+          // await axios.post(`${apiUrl}/room/form`, room.value)
         }
 
       } catch (err: unknown) {
@@ -171,7 +240,7 @@ export default defineComponent({
       // navigating flag will be irrelevant after navigation
     }
 
-    return { loading, error, room, onSave, goBack, formatDate, formatDateToInput, saving, cancelling, navigating }
+    return { loading, error, room, houseName, onSave, goBack, formatDate, formatDateToInput, saving, cancelling, navigating }
   }
 })
 </script>
