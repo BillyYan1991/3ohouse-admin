@@ -24,23 +24,24 @@
         <div class="mb-3">
           <label class="form-label d-block">啟用</label>
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" id="activeTrue" :value="true" v-model="special.isActive" />
+            <input class="form-check-input" type="radio" name="isActive" id="activeTrue" :value="true" v-model="special.isActive" />
             <label class="form-check-label" for="activeTrue">是</label>
           </div>
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" id="activeFalse" :value="false" v-model="special.isActive" />
+            <input class="form-check-input" type="radio" name="isActive" id="activeFalse" :value="false" v-model="special.isActive" />
             <label class="form-check-label" for="activeFalse">否</label>
           </div>
         </div>
         <div class="mb-3">
           <label class="form-label d-block">關房</label>
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" id="closedTrue" :value="true" v-model="special.isClosed" />
+            <input class="form-check-input" type="radio" name="isClosed" id="closedTrue" :value="true"
+              v-model="special.isClosed" />
             <label class="form-check-label" for="closedTrue">是</label>
           </div>
           <div class="form-check form-check-inline">
-            <input class="form-check-input" type="radio" id="closedFalse" :value="false" v-model="special.isClosed"
-              checked="true" />
+            <input class="form-check-input" type="radio" name="isClosed" id="closedFalse" :value="false"
+              v-model="special.isClosed" />
             <label class="form-check-label" for="closedFalse">否</label>
           </div>
         </div>
@@ -141,7 +142,8 @@ export default defineComponent({
       roomId: 0,
       roomName: '',
       originalPrice: 0,
-      price: 0
+      price: 0,
+      isClosed: false
     });
     const getErrorMessage = (err: unknown) => {
       if (!err) return '發生錯誤'
@@ -178,7 +180,8 @@ export default defineComponent({
             roomId: data.roomId ?? 0,
             roomName: data.room.name ?? '',
             originalPrice: data.room.price ?? 0,
-            price: data.price ?? 0
+            price: data.price ?? 0,
+            isClosed: typeof data.isClosed === 'boolean' ? data.isClosed : (String(data.isClosed) === 'true')
           }
         }
         console.log('載入的 specialday 資料', special.value)

@@ -123,7 +123,7 @@
 
           <!-- 右邊取消訂單 -->
           <div class="ms-auto">
-            <button class="btn bg-danger ms-2" type="submit" @click.prevent="onCancel" :disabled="cancelling">
+            <button class="btn bg-danger ms-2" type="button" @click.prevent="onCancel" :disabled="cancelling">
               取消訂單
             </button>
           </div>
@@ -267,6 +267,29 @@ export default defineComponent({
     const onSave = async (sendEmail: boolean = false) => {
       if (saving.value) return
       saving.value = true
+      error.value = null
+      const today = new Date()
+      today.setHours(0, 0, 0, 0)
+      const s = booking.value?.checkIn ? new Date(booking.value.checkIn) : null
+      const e = booking.value?.checkOut ? new Date(booking.value.checkOut) : null
+      if (!s || isNaN(s.getTime())) {
+        window.alert('請輸入有效的起始日期')
+        saving.value = false
+        return
+      }
+      s.setHours(0, 0, 0, 0)
+      if (!e || isNaN(e.getTime())) {
+        window.alert('請輸入有效的結束日期')
+        saving.value = false
+        return
+      }
+      e.setHours(0, 0, 0, 0)
+      if (e < s) {
+        window.alert('結束日期不可小於起始日期')
+        saving.value = false
+        return
+      }
+      loading.value = true
       // 範例：如果有 id，put 更新，否則 post 建立
       try {
         // 如果 checkIn/checkOut 有變動，先檢查是否與已存在訂單衝突

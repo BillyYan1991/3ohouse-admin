@@ -23,12 +23,13 @@
                   <th class="cell">關房</th>
                   <th class="cell">啟用</th>
                   <th class="cell"></th>
+                  <th class="cell"></th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="obj in list" :key="obj.id">
-                  <td class="cell">{{ obj.name }}</td>
-                  <td class="cell">{{ obj.roomName }}</td>
+                  <td class="cell"><span class="truncate">{{ obj.name }}</span></td>
+                  <td class="cell"><span class="truncate">{{ obj.roomName }}</span></td>
                   <td class="cell">{{ obj.price }}</td>
                   <td class="cell"><span class="cell-data">{{ formatDate(obj.startDate) }}</span></td>
                   <td class="cell"><span class="cell-data">{{ formatDate(obj.endDate) }}</span></td>
@@ -36,6 +37,8 @@
                   <td class="cell">{{ obj.isActive ? '是' : '否' }}</td>
                   <td class="cell"><a class="btn app-btn-primary" href="#" @click.prevent="goEdit(obj.id)"
                       :aria-disabled="navigatingMap[obj.id]" :class="{ disabled: navigatingMap[obj.id] }">編輯</a></td>
+                  <td class="cell"><a class="btn app-btn-secondary" href="#" @click.prevent="goDelete(obj.id)"
+                      :aria-disabled="navigatingMap[obj.id]" :class="{ disabled: navigatingMap[obj.id] }">刪除</a></td>
                 </tr>
 
               </tbody>
@@ -128,13 +131,36 @@ export default defineComponent({
       router.push({ name: 'SpecialDayForm', params: { id } })
     }
 
+    function goDelete(id: string | number) {
+      if (navigatingMap.value[String(id)]) return
+      if (!confirm('確定要刪除這個特別區間嗎？')) return
+      navigatingMap.value[String(id)] = true
+      axios.delete(`${apiUrl}/specialday/delete?id=${id}`)
+        .then(() => {
+          // 刪除成功後重新載入列表
+          loadList(houseId.value)
+        })
+        .catch(err => {
+          console.error('刪除失敗', err)
+          alert('刪除失敗，請稍後再試')
+        })
+        .finally(() => {
+          navigatingMap.value[String(id)] = false
+        })
+    }
 
 
-    return { list, formatDate, houseId, goNew, goEdit, navigatingNew, navigatingMap }
+
+    return { list, formatDate, houseId, goNew, goEdit, goDelete, navigatingNew, navigatingMap }
   }
 })
 </script>
 
 <style scoped>
-/* simple placeholder */
+.truncate {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 </style>

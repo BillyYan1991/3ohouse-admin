@@ -22,7 +22,7 @@
               </thead>
               <tbody>
                 <tr v-for="booking in bookings" :key="booking.id">
-                  <td class="cell">{{ booking.house.name }}</td>
+                  <td class="cell"><span class="truncate">{{ booking.house.name }}</span></td>
                   <td class="cell"><span class="truncate">{{ roomNames(booking.details) }}</span></td>
                   <td class="cell">{{ booking.userName }}</td>
                   <td class="cell"><span class="cell-data">{{ formatDate(booking.checkIn) }}</span></td>
@@ -40,7 +40,7 @@
                       :to="{ name: 'BookingForm', params: { id: booking.id } }">
                       編輯
                     </router-link>
-                    <router-link v-if="booking.status === -1" class="btn app-btn-primary"
+                    <router-link v-if="booking.status === -1" class="btn btn-secondary"
                       :to="{ name: 'BookingForm', params: { id: booking.id } }">
                       預覽
                     </router-link>
@@ -115,5 +115,10 @@ export default defineComponent({
 </script>
 
 <style scoped>
-/* simple placeholder */
+.truncate {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 </style>

@@ -176,7 +176,7 @@ function toggleSidepanel() {
             </li><!--//nav-item-->
             <li class="nav-item">
               <router-link :to="{ name: 'BookingList' }" class="nav-link" active-class="active">
-                <span class="nav-link-text" style="font-size: 25px;"><strong>清單</strong></span>
+                <span class="nav-link-text" style="font-size: 25px;"><strong>訂單管理</strong></span>
               </router-link>
               <!--//nav-link-->
             </li><!--//nav-item-->
