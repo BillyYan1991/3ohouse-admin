@@ -52,7 +52,7 @@
         <div class="mb-3">
           <label class="form-label">谷歌通知描述</label>
           <div class="d-flex align-items-center gap-2">
-            <input class="form-control" :value="room.color" />
+            <input class="form-control" v-model="room.color" />
             <div class="d-flex align-items-center">
               <input class="form-control w-auto" style="width:5rem" v-model.number="room.pqty" />
               <span class="ms-1">人</span>
@@ -69,23 +69,37 @@
               <table class="table app-table-hover mb-0 text-left">
                 <thead>
                   <tr>
-                    <th style="background-color:azure" class="cell">星期日</th>
-                    <th style="background-color:azure" class="cell">星期一</th>
-                    <th style="background-color:azure" class="cell">星期二</th>
-                    <th style="background-color:azure" class="cell">星期三</th>
-                    <th style="background-color:azure" class="cell">星期四</th>
-                    <th style="background-color:azure" class="cell">星期五</th>
-                    <th style="background-color:azure" class="cell">星期六</th>
+                    <th style="background-color:azure" class="cell">星期</th>
+                    <th style="background-color:azure" class="cell">金額</th>
                   </tr>
                 </thead>
                 <tbody>
                   <tr>
+                    <td class="cell">星期日</td>
                     <td class="cell"><input class="form-control" v-model.number="room.day0" /></td>
+                  </tr>
+                  <tr>
+                    <td class="cell">星期一</td>
                     <td class="cell"><input class="form-control" v-model.number="room.day1" /></td>
+                  </tr>
+                  <tr>
+                    <td class="cell">星期二</td>
                     <td class="cell"><input class="form-control" v-model.number="room.day2" /></td>
+                  </tr>
+                  <tr>
+                    <td class="cell">星期三</td>
                     <td class="cell"><input class="form-control" v-model.number="room.day3" /></td>
+                  </tr>
+                  <tr>
+                    <td class="cell">星期四</td>
                     <td class="cell"><input class="form-control" v-model.number="room.day4" /></td>
+                  </tr>
+                  <tr>
+                    <td class="cell">星期五</td>
                     <td class="cell"><input class="form-control" v-model.number="room.day5" /></td>
+                  </tr>
+                  <tr>
+                    <td class="cell">星期六</td>
                     <td class="cell"><input class="form-control" v-model.number="room.day6" /></td>
                   </tr>
                 </tbody>
@@ -230,6 +244,7 @@ export default defineComponent({
         if (id) {
 
           const payload = {
+            name: room.value?.name,
             id: room.value?.id,
             price: room.value?.price,
             extraBedPrice: room.value?.extraBedPrice,

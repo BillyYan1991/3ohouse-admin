@@ -35,8 +35,16 @@
                     <span v-else-if="booking.status === 2">已確認</span>
                     <span v-else-if="booking.status === -1">已取消</span>
                   </td>
-                  <td class="cell"><router-link class="btn app-btn-primary" v-if="booking.status !== -1"
-                      :to="{ name: 'BookingForm', params: { id: booking.id } }">編輯</router-link></td>
+                  <td class="cell">
+                    <router-link v-if="booking.status !== -1" class="btn app-btn-primary"
+                      :to="{ name: 'BookingForm', params: { id: booking.id } }">
+                      編輯
+                    </router-link>
+                    <router-link v-if="booking.status === -1" class="btn app-btn-primary"
+                      :to="{ name: 'BookingForm', params: { id: booking.id } }">
+                      預覽
+                    </router-link>
+                  </td>
                 </tr>
 
               </tbody>

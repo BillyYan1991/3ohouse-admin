@@ -108,10 +108,12 @@
         <div class="d-flex align-items-center">
           <!-- 左邊按鈕群 -->
           <div>
-            <button class="btn btn-primary ms-2" type="submit" @click.prevent="onSave(false)" :disabled="saving">
+            <button v-if="booking.status !== -1" class="btn btn-primary ms-2" type="submit"
+              @click.prevent="onSave(false)" :disabled="saving">
               儲存
             </button>
-            <button class="btn btn-primary ms-2" type="submit" @click.prevent="onSave(true)" :disabled="saving">
+            <button v-if="booking.status !== -1" class="btn btn-primary ms-2" type="submit"
+              @click.prevent="onSave(true)" :disabled="saving">
               儲存並發送信件
             </button>
             <button class="btn btn-secondary ms-2" type="button" @click="goBack" :disabled="navigating">
@@ -164,6 +166,7 @@ export default defineComponent({
     const booking = ref<Partial<Booking>>({})
     const originalCheckIn = ref<string | null>(null)
     const originalCheckOut = ref<string | null>(null)
+    const baseTotalWithoutExtra = ref<number | null>(null)
 
     // 防連點 flags
     const saving = ref(false)
@@ -210,6 +213,26 @@ export default defineComponent({
       return name ? String(name) : ''
     })
 
+    const toSafeNumber = (value: unknown) => {
+      const num = Number(value)
+      return Number.isFinite(num) ? num : 0
+    }
+
+    const calcDetailExtraBedPrice = (detail: Booking['details'][number]) => {
+      const unitPrice = toSafeNumber(detail.room?.extraBedPrice)
+      const qty = Math.max(0, toSafeNumber(detail.extraBedQty))
+      return unitPrice * qty
+    }
+
+    const sumExtraBedPrice = () => {
+      return (booking.value?.details ?? []).reduce((sum, detail) => sum + calcDetailExtraBedPrice(detail), 0)
+    }
+
+    const initBaseTotalWithoutExtra = () => {
+      const currentTotal = toSafeNumber(booking.value?.totalPrice)
+      baseTotalWithoutExtra.value = currentTotal - sumExtraBedPrice()
+    }
+
 
 
     const fetchBooking = async (bookingId: string) => {
@@ -228,6 +251,7 @@ export default defineComponent({
         console.log('載入的 booking 資料', booking.value)
         originalCheckIn.value = booking.value?.checkIn ? String(booking.value.checkIn) : null
         originalCheckOut.value = booking.value?.checkOut ? String(booking.value.checkOut) : null
+        initBaseTotalWithoutExtra()
       } catch (err: unknown) {
         error.value = getErrorMessage(err)
       } finally {
@@ -275,7 +299,7 @@ export default defineComponent({
           const detailsPayload = (booking.value?.details ?? []).map(d => ({
             id: d.id,
             extraBedQty: d.extraBedQty ?? 0,
-            extraBedPrice: d.extraBedPrice ?? 0,
+            extraBedPrice: calcDetailExtraBedPrice(d),
             babyBedQty: d.babyBedQty ?? 0,
             ...(datesChanged ? { checkIn: isoCheckIn, checkOut: isoCheckOut } : {}),
           }))
@@ -368,25 +392,42 @@ export default defineComponent({
     const onExtraBedQtyChange = (detail: Booking['details'][number]) => {
       if (!booking.value) return
       try {
-        const oldExtraPrice = Number(detail.extraBedPrice ?? 0)
-        const unitPrice = Number(detail.room?.extraBedPrice ?? 0)
-        const qty = Number(detail.extraBedQty ?? 0)
-        const newExtraPrice = unitPrice * qty
-        // update detail extra price
+        const newExtraPrice = calcDetailExtraBedPrice(detail)
         detail.extraBedPrice = newExtraPrice
-        // adjust booking total price: -old + new
-        const currentTotal = Number(booking.value.totalPrice ?? 0)
-        booking.value.totalPrice = currentTotal - oldExtraPrice + newExtraPrice
+
+        const base = baseTotalWithoutExtra.value ?? (toSafeNumber(booking.value.totalPrice) - sumExtraBedPrice())
+        baseTotalWithoutExtra.value = base
+        booking.value.totalPrice = base + sumExtraBedPrice()
       } catch {
         // ignore
       }
     }
 
-    const goBack = () => {
+    const goBack = async () => {
       if (navigating.value) return
       navigating.value = true
-      router.back()
-      // navigating flag will be irrelevant after navigation
+
+      try {
+        // 新開視窗/分頁常見 history 長度不足，back 會無效
+        if (window.history.length > 1) {
+          router.back()
+          // 若 back 無效，避免按鈕永久 disabled
+          setTimeout(() => {
+            navigating.value = false
+          }, 500)
+          return
+        }
+
+        // fallback：沒有可返回歷史時，導到預設頁
+        const fgparam = route.query.fg as string | undefined
+        if (fgparam === '1') {
+          await router.replace('/index')
+        } else {
+          await router.replace('/index') // 也可改成你要的列表頁，例如 '/booking'
+        }
+      } catch {
+        navigating.value = false
+      }
     }
 
     return { loading, error, booking, onSave, goBack, onCancel, formatDate, formatDateToInput, saving, cancelling, navigating, onExtraBedQtyChange, displayUser, originalCheckIn, originalCheckOut }

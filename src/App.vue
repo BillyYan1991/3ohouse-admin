@@ -9,8 +9,13 @@
 </template>
 
 <style scoped>
-/* component-scoped styles */
-nav {
-  padding: 12px;
+main {
+  padding-inline: 12px;
+}
+
+@media (min-width: 768px) {
+  main {
+    padding-inline: 0;
+  }
 }
 </style>
