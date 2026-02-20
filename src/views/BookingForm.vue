@@ -371,7 +371,7 @@ export default defineComponent({
 
     const onCancel = async () => {
       if (cancelling.value) return
-      const ok = window.confirm('are you sure?really?真假?')
+      const ok = window.confirm('確定取消訂單?')
       if (!ok) return
       cancelling.value = true
       // 範例：如果有 id，put 更新，否則 post 建立

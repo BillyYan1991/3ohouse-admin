@@ -1,6 +1,38 @@
 <template>
   <div class="app-content pt-3 p-md-3 p-lg-4">
-    <h1 class="app-page-title">列表</h1>
+    <h1 class="app-page-title">訂單管理</h1>
+    <div class="row mb-3 align-items-center">
+      <form @submit.prevent="onSearch" class="w-100">
+        <div class="row g-2 align-items-end">
+          <div class="col-md-4">
+            <input v-model="q" type="text" id="searchInput" class="form-control" placeholder="姓名、電話、信箱">
+          </div>
+          <div class="col-md-3">
+            <label for="houseIdInput" class="form-label">房源</label>
+            <select v-model="houseId" id="houseIdInput" class="form-select">
+              <option value="">全部房源</option>
+              <option value="1">無憂</option>
+              <option value="2">寄寓</option>
+              <option value="3">上水</option>
+              <option value="4">花水木</option>
+              <option value="5">避風港</option>
+            </select>
+          </div>
+          <div class="col-md-3">
+            <label for="statusSelect" class="form-label">狀態</label>
+            <select v-model="status" id="statusSelect" class="form-select">
+              <option value="">全部狀態</option>
+              <option value="1">待處理</option>
+              <option value="2">已確認</option>
+              <option value="-1">已取消</option>
+            </select>
+          </div>
+          <div class="col-md-2">
+            <button class="btn btn-primary w-100" type="submit">搜尋</button>
+          </div>
+        </div>
+      </form>
+    </div>
     <div class="tab-pane fade active show" id="orders-all" role="tabpanel" aria-labelledby="orders-all-tab">
       <div class="app-card app-card-orders-table shadow-sm mb-5">
         <div class="app-card-body">
@@ -53,16 +85,16 @@
 
         </div><!--//app-card-body-->
       </div><!--//app-card-->
-      <nav class="app-pagination" style="display: none;">
+      <nav class="app-pagination">
         <ul class="pagination justify-content-center">
-          <li class="page-item disabled">
-            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">Previous</a>
+          <li class="page-item" :class="{ disabled: page <= 1 }">
+            <a class="page-link" href="#" @click.prevent="prevPage">上一頁</a>
           </li>
-          <li class="page-item active"><a class="page-link" href="#">1</a></li>
-          <li class="page-item"><a class="page-link" href="#">2</a></li>
-          <li class="page-item"><a class="page-link" href="#">3</a></li>
-          <li class="page-item">
-            <a class="page-link" href="#">Next</a>
+          <li v-for="p in pages" :key="p" class="page-item" :class="{ active: page === p }">
+            <a class="page-link" href="#" @click.prevent="goToPage(p)">{{ p }}</a>
+          </li>
+          <li class="page-item" :class="{ disabled: page >= totalPages }">
+            <a class="page-link" href="#" @click.prevent="nextPage">下一頁</a>
           </li>
         </ul>
       </nav><!--//app-pagination-->
@@ -72,7 +104,7 @@
 </template>
 
 <script lang="ts">
-import { defineComponent, onMounted, ref } from 'vue'
+import { defineComponent, onMounted, ref, computed } from 'vue'
 import type { Booking } from '@/types/booking'
 
 import axios from 'axios'
@@ -89,15 +121,35 @@ export default defineComponent({
   name: 'BookingList',
   setup() {
     const bookings = ref<Booking[]>([])
-    onMounted(async () => {
-      try {
-        const res = await axios.get<Booking[]>(`${apiUrl}/booking/list`)
-        bookings.value = res.data || []
-        console.log('未處裡訂房資料', bookings.value)
-      } catch (err) {
+    const page = ref<number>(1)
+    const pageSize = ref<number>(10)
+    const totalPages = ref<number>(1)
+    const total = ref<number>(0)
+    const loading = ref<boolean>(false)
 
-        console.error('無法取得未處裡訂房資料', err)
+    const fetchBookings = async (p: number = page.value) => {
+      loading.value = true
+      try {
+        const params: any = { page: p, pageSize: pageSize.value }
+        if (q.value) params.q = q.value
+        if (houseId.value) params.houseId = houseId.value
+        if (status.value !== '') params.status = status.value
+        const res = await axios.get(`${apiUrl}/booking/list`, { params })
+        const d = res.data || {}
+        bookings.value = d.data || []
+        total.value = d.total || 0
+        totalPages.value = d.totalPages || 1
+        page.value = d.page || p
+        console.log('取得分頁訂房資料', { page: page.value, pageSize: pageSize.value, total: total.value })
+      } catch (err) {
+        console.error('無法取得訂房資料', err)
+      } finally {
+        loading.value = false
       }
+    }
+
+    onMounted(() => {
+      void fetchBookings()
     })
 
     const roomNames = (details: import('@/types/booking').BookingDetail[] | undefined) => {
@@ -109,7 +161,36 @@ export default defineComponent({
       }
     }
 
-    return { bookings, formatDate, roomNames }
+    const pages = computed(() => {
+      const arr: number[] = []
+      for (let i = 1; i <= Math.max(1, totalPages.value); i++) arr.push(i)
+      return arr
+    })
+
+    const q = ref<string>('')
+    const houseId = ref<string>('')
+    const status = ref<string | number>('')
+
+    const onSearch = () => {
+      void fetchBookings(1)
+    }
+
+    const goToPage = (p: number) => {
+      if (p < 1 || p > Math.max(1, totalPages.value)) return
+      void fetchBookings(p)
+    }
+
+    const prevPage = () => {
+      if (page.value <= 1) return
+      void fetchBookings(page.value - 1)
+    }
+
+    const nextPage = () => {
+      if (page.value >= Math.max(1, totalPages.value)) return
+      void fetchBookings(page.value + 1)
+    }
+
+    return { bookings, formatDate, roomNames, page, pageSize, totalPages, total, pages, goToPage, prevPage, nextPage, loading, onSearch, q, houseId, status }
   }
 })
 </script>
