@@ -74,6 +74,11 @@ const router = createRouter({
           name: 'FinancialForm',
           component: FinancialForm,
         },
+        {
+          path: 'sysconfigSettings',
+          name: 'SysconfigSettings',
+          component: () => import('@/views/SysconfigSettings.vue'),
+        },
       ],
     },
   ],

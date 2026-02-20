@@ -306,6 +306,12 @@ function toggleSidepanel() {
                 <span class="nav-link-text" style="font-size: 25px;"><strong>財務</strong></span>
               </router-link>
               <!--//nav-link-->
+            </li>
+            <li class="nav-item">
+              <router-link :to="{ name: 'SysconfigSettings' }" class="nav-link" active-class="active">
+                <span class="nav-link-text" style="font-size: 25px;"><strong>參數設定</strong></span>
+              </router-link>
+              <!--//nav-link-->
             </li><!--//nav-item-->
           </ul><!--//app-menu-->
         </nav><!--//app-nav-->
