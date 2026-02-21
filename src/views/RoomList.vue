@@ -10,11 +10,15 @@
                 <tr>
                   <th class="cell">房型</th>
                   <th class="cell"></th>
+                  <th class="cell"></th>
                 </tr>
               </thead>
               <tbody>
                 <tr v-for="room in rooms" :key="room.id">
                   <td class="cell">{{ room.name }}</td>
+                  <td class="cell"><router-link class="btn app-btn-primary"
+                      :to="{ name: 'RoomPicForm', params: { houseId: room.houseId, roomId: room.id, roomName: room.name } }">圖片上傳</router-link>
+                  </td>
                   <td class="cell"><router-link class="btn app-btn-primary"
                       :to="{ name: 'RoomForm', params: { id: room.id } }">編輯</router-link></td>
                 </tr>

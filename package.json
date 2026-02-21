@@ -17,6 +17,7 @@
     "format": "prettier --write src/"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.97.0",
     "@vueuse/core": "^13.9.0",
     "axios": "^1.12.2",
     "jquery": "^3.7.1",
