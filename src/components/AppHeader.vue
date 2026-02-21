@@ -322,4 +322,24 @@ function toggleSidepanel() {
   </header>
 </template>
 
-<style scoped></style>
+<style scoped>
+/* 使含有箭頭的 submenu-toggle 水平排列並垂直置中箭頭 */
+.nav-link.submenu-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-link-text {
+  display: inline-block;
+  /* 確保文字可在左側佔據空間 */
+}
+
+.submenu-arrow {
+  display: inline-flex;
+  align-items: center;
+  /* 垂直置中箭頭圖示 */
+  margin-left: 0.5rem;
+  /* 與文字保持適當間距 */
+}
+</style>

@@ -1,5 +1,8 @@
 <template>
   <div class="app-content pt-3 p-md-3 p-lg-4">
+    <div class="calendar-toolbar mb-2">
+      <button class="btn btn-outline-primary relogin-btn" @click="relogin">重新登入</button>
+    </div>
     <div class="calendar-frame-wrapper">
       <iframe class="calendar-iframe"
         :src="`https://calendar.google.com/calendar/embed?src=${calendarId}&ctz=Asia%2FTaipei`" style="border: 0"
@@ -10,14 +13,22 @@
 
 <script lang="ts">
 import { defineComponent, computed } from 'vue'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
+import { clearToken } from '@/utils/auth'
 export default defineComponent({
   name: 'CalendarForm',
   setup() {
     const route = useRoute()
+    const router = useRouter()
     const calendarId = computed(() => (route.params.id as string) || '')
+
+    function relogin() {
+      clearToken()
+      router.push({ name: 'Login', query: { redirect: route.fullPath } })
+    }
     return {
       calendarId
+      , relogin
     }
   }
 });
@@ -50,5 +61,14 @@ export default defineComponent({
   .calendar-iframe {
     width: 100%;
   }
+}
+
+.calendar-toolbar {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.relogin-btn {
+  padding: 0.35rem 0.75rem;
 }
 </style>
