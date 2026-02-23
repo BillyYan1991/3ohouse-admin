@@ -313,6 +313,21 @@ export default defineComponent({
             })
             if (response.data && Array.isArray(response.data) && response.data.length > 0) {
               window.alert(`房型 ${d.room?.name || roomId} 在 ${checkInStr} - ${checkOutStr} 已有重複訂房區間，請確認。`)
+              loading.value = false
+              saving.value = false
+              return
+            }
+            const response2 = await axios.get(`${apiUrl}/booking/booked`, {
+              params: {
+                houseId: booking.value?.houseId,
+                checkIn: checkInStr,
+                checkOut: checkOutStr,
+              },
+            })
+            //如果有訂房，不能包棟
+            if (response2.data && Array.isArray(response2.data) && response2.data.length > 0 && d.room?.main) {
+              window.alert(`在 ${checkInStr} - ${checkOutStr} 已有訂房，包棟訂單不可修改日期，請確認。`)
+              loading.value = false
               saving.value = false
               return
             }
@@ -333,7 +348,7 @@ export default defineComponent({
             admin_memo: booking.value?.admin_memo ?? null,
             totalPrice: booking.value?.totalPrice ?? 0,
             details: detailsPayload,
-            status: 2,
+            status: (booking.value?.paid ?? 0) >= 0 ? 2 : 1,
             lastUpdateUser: displayUser.value || 'admin',
             ...(datesChanged ? { checkIn: isoCheckIn, checkOut: isoCheckOut } : {}),
           }
@@ -366,6 +381,7 @@ export default defineComponent({
       }
       finally {
         saving.value = false
+        loading.value = false
       }
     }
 
