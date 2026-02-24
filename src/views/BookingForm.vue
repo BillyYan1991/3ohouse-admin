@@ -348,7 +348,7 @@ export default defineComponent({
             admin_memo: booking.value?.admin_memo ?? null,
             totalPrice: booking.value?.totalPrice ?? 0,
             details: detailsPayload,
-            status: (booking.value?.paid ?? 0) >= 0 ? 2 : 1,
+            status: (booking.value?.paid ?? 0) > 0 ? 2 : 1,
             lastUpdateUser: displayUser.value || 'admin',
             ...(datesChanged ? { checkIn: isoCheckIn, checkOut: isoCheckOut } : {}),
           }
